@@ -1,24 +1,17 @@
-import Link from 'next/link'
-export default function Home(){
+export default function Home() {
   return (
-    <main style={{fontFamily:'system-ui',padding:'20px',maxWidth:'600px',margin:'0 auto'}}>
-      <div style={{background:'#0f3d2e',color:'white',padding:'30px',borderRadius:'20px',textAlign:'center'}}>
-        <h1 style={{fontSize:'32px',fontWeight:'bold'}}>AL SAFA TRADERS.PK</h1>
-        <p>Daraz Best Deals - Dubai Based</p>
-        <p style={{marginTop:'10px',fontSize:'14px'}}>Website LIVE hai! ✅</p>
+    <div style={{ fontFamily: 'system-ui, sans-serif', background: '#f5f5f5', minHeight: '100vh' }}>
+      <div style={{ background: '#0f2e26', color: 'white', padding: '24px', textAlign: 'center' }}>
+        <h1 style={{ margin: 0, fontSize: '26px' }}>AL SAFA TRADERS.PK</h1>
+        <p style={{ margin: '8px 0 0 0', color: '#a7f3d0' }}>Pakistan's Best Daraz Affiliate Store 🇵🇰</p>
+        <p style={{ margin: '5px 0 0 0', color: '#d1fae5', fontSize: '12px' }}>100% Original | Delivery All Pakistan</p>
       </div>
-      <div style={{marginTop:'20px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:'15px'}}>
-        <div style={{border:'1px solid #ddd',borderRadius:'15px',padding:'15px',textAlign:'center'}}>
-          <img src="https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=300" style={{width:'100%',borderRadius:'10px'}} />
-          <h3>TWS Earbuds M10</h3><b>Rs. 2499</b><br/>
-          <a href="https://www.daraz.pk" target="_blank" style={{background:'#f85606',color:'white',padding:'8px 15px',borderRadius:'20px',display:'inline-block',marginTop:'10px',textDecoration:'none'}}>Buy on Daraz</a>
-        </div>
-        <div style={{border:'1px solid #ddd',borderRadius:'15px',padding:'15px',textAlign:'center'}}>
-          <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300" style={{width:'100%',borderRadius:'10px'}} />
-          <h3>Smart Watch</h3><b>Rs. 3499</b><br/>
-          <a href="https://www.daraz.pk" target="_blank" style={{background:'#f85606',color:'white',padding:'8px 15px',borderRadius:'20px',display:'inline-block',marginTop:'10px',textDecoration:'none'}}>Buy on Daraz</a>
-        </div>
+      <div style={{ background: 'white', padding: '12px', textAlign: 'center' }}>
+        <p style={{ margin: 0, fontSize: '13px', color: '#065f46' }}>✅ Trusted Daraz Affiliate | 🚚 All Pakistan Delivery</p>
       </div>
-    </main>
-  )
-}
+      <div style={{ padding: '20px', maxWidth: '1100px', margin: '0 auto' }}>
+        <h2 style={{ fontSize: '18px' }}>🔥 Hot Deals</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+          <div style={{ background: 'white', borderRadius: '12px', padding: '12px' }}>
+            <div style={{ background: '#eef', height: '140px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🎧 TWS M10</div>
+            <h3 style={{ font
