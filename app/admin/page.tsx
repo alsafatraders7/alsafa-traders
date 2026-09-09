@@ -1,79 +1,20 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { createClient } from "@supabase/supabase-js"
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-
-export default function AdminPage() {
-  const [email, setEmail] = useState("admin@alsafatraders.pk")
-  const [password, setPassword] = useState("")
-  const [loggedIn, setLoggedIn] = useState(false)
-  const [products, setProducts] = useState<any[]>([])
-  const [title, setTitle] = useState("")
-  const [price, setPrice] = useState("")
-  const [darazUrl, setDarazUrl] = useState("")
-
-  const login = async () => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (!error) {
-      setLoggedIn(true)
-      fetchProducts()
-    } else {
-      alert("Login failed: " + error.message)
-    }
-  }
-
-  const fetchProducts = async () => {
-    const { data } = await supabase.from("products").select("*").order("created_at", { ascending: false })
-    if (data) setProducts(data)
-  }
-
-  const addProduct = async () => {
-    const { error } = await supabase.from("products").insert([{ title, price: Number(price), daraz_url: darazUrl, is_active: true }])
-    if (!error) {
-      setTitle(""); setPrice(""); setDarazUrl("")
-      fetchProducts()
-      alert("ORIGINAL Product Added!")
-    }
-  }
-
-  if (!loggedIn) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0f3d2e] p-4">
-        <div className="bg-white p-8 rounded-xl w-full max-w-md">
-          <h1 className="text-2xl font-bold text-[#0f3d2e] mb-1">Al Safa Traders.pk</h1>
-          <p className="text-sm mb-6">Pakistan Based • ORIGINAL Owner Login</p>
-          <input className="w-full border p-3 rounded mb-3" value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email" />
-          <input className="w-full border p-3 rounded mb-4" type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Your Password" />
-          <button onClick={login} className="w-full bg-[#0f3d2e] text-white p-3 rounded font-bold">Login to ORIGINAL Account</button>
-          <p className="text-xs mt-4 text-gray-500">Login: admin@alsafatraders.pk / Your Supabase Password</p>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-2xl font-bold mb-6">Al Safa Traders.pk • ORIGINAL Admin • Pakistan Based</h1>
-      <div className="bg-white p-6 rounded-xl mb-6">
-        <h2 className="font-bold mb-4">+ Add ORIGINAL Product</h2>
-        <input className="border p-2 rounded w-full mb-2" placeholder="Product Title" value={title} onChange={e=>setTitle(e.target.value)} />
-        <input className="border p-2 rounded w-full mb-2" placeholder="Price PKR" value={price} onChange={e=>setPrice(e.target.value)} />
-        <input className="border p-2 rounded w-full mb-3" placeholder="Daraz Affiliate URL" value={darazUrl} onChange={e=>setDarazUrl(e.target.value)} />
-        <button onClick={addProduct} className="bg-[#0f3d2e] text-white px-6 py-2 rounded">Add Product</button>
-      </div>
-      <div className="bg-white p-6 rounded-xl">
-        <h2 className="font-bold mb-4">Products ({products.length})</h2>
-        {products.map(p=>(
-          <div key={p.id} className="border-b py-2 flex justify-between">
-            <span>{p.title} - PKR {p.price}</span>
-            <span className="text-xs text-green-600">Live</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+export default function AdminPage(){
+  const [email,setEmail]=useState("admin@alsafatraders.pk")
+  const [pass,setPass]=useState("")
+  const [logged,setLogged]=useState(false)
+  const [products,setProducts]=useState<any[]>([])
+  const [title,setTitle]=useState("")
+  const [price,setPrice]=useState("")
+  const [daraz,setDaraz]=useState("")
+  const login=async()=>{ const {error}=await supabase.auth.signInWithPassword({email,password:pass}); if(!error){ setLogged(true); load() } else alert(error.message) }
+  const load=async()=>{ const {data}=await supabase.from("products").select("*").order("id",{ascending:false}); if(data) setProducts(data) }
+  useEffect(()=>{ supabase.auth.getSession().then(({data})=>{ if(data.session){ setLogged(true); load() } }) },[])
+  const addProduct=async()=>{ if(!title||!price||!daraz) return alert("Sab fill karo"); const {error}=await supabase.from("products").insert([{title,price,daraz_url:daraz}]); if(!error){ setTitle("");setPrice("");setDaraz(""); load(); alert("✅ Added!") } }
+  const delProduct=async(id:number)=>{ await supabase.from("products").delete().eq("id",id); load() }
+  if(!logged) return (<div style={{minHeight:"100vh",background:"#000",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{background:"#111",border:"1px solid #D4AF37",padding:40,borderRadius:16,width:350}}><h1 style={{color:"#D4AF37",fontSize:28,fontWeight:800,textAlign:"center"}}>AL SAFA ADMIN</h1><input value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email" style={{width:"100%",marginTop:20,padding:12,background:"#000",border:"1px solid #333",color:"#fff",borderRadius:8}}/><input type="password" value={pass} onChange={e=>setPass(e.target.value)} placeholder="Password" style={{width:"100%",marginTop:12,padding:12,background:"#000",border:"1px solid #333",color:"#fff",borderRadius:8}}/><button onClick={login} style={{width:"100%",marginTop:20,padding:12,background:"#D4AF37",color:"#000",fontWeight:700,borderRadius:8}}>LOGIN</button></div></div>)
+  return (<div style={{minHeight:"100vh",background:"#000",color:"#fff",padding:20}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid #D4AF37",paddingBottom:15}}><h1 style={{color:"#D4AF37",fontSize:24,fontWeight:800}}>AL SAFA - DASHBOARD</h1><button onClick={()=>{supabase.auth.signOut(); setLogged(false)}} style={{background:"#222",color:"#fff",padding:"8px 16px",borderRadius:8,border:"1px solid #333"}}>Logout</button></div><div style={{background:"#111",border:"1px solid #222",padding:20,borderRadius:12,marginTop:20}}><h2 style={{color:"#D4AF37",marginBottom:15}}>Add New Product</h2><div style={{display:"grid",gap:12}}><input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Title" style={{padding:12,background:"#000",border:"1px solid #333",color:"#fff",borderRadius:8}}/><input value={price} onChange={e=>setPrice(e.target.value)} placeholder="Price" style={{padding:12,background:"#000",border:"1px solid #333",color:"#fff",borderRadius:8}}/><input value={daraz} onChange={e=>setDaraz(e.target.value)} placeholder="Daraz Link" style={{padding:12,background:"#000",border:"1px solid #333",color:"#fff",borderRadius:8}}/></div><button onClick={addProduct} style={{marginTop:15,padding:"12px 30px",background:"#D4AF37",color:"#000",fontWeight:800,borderRadius:8}}>ADD PRODUCT +</button></div><div style={{marginTop:30}}>{products.map((p:any)=>(<div key={p.id} style={{background:"#111",border:"1px solid #222",padding:15,borderRadius:10,display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}><div><b style={{color:"#D4AF37"}}>{p.title}</b> - Rs {p.price}</div><button onClick={()=>delProduct(p.id)} style={{background:"red",color:"#fff",padding:"6px 12px",borderRadius:6}}>Delete</button></div>))}</div></div>)
 }
