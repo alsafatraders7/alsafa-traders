@@ -1,90 +1,58 @@
-"use client"
-import { useEffect, useState } from "react"
-import { createClient } from "@supabase/supabase-js"
+"use client";
+import { useEffect, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+);
 
 export default function Home() {
-  const [products, setProducts] = useState<any>([])
+  const [products, setProducts] = useState<any[]>([]);
+  const [clickCount, setClickCount] = useState(0);
+  const [showOwner, setShowOwner] = useState(false);
+  const [pass, setPass] = useState("");
+  const [isOwner, setIsOwner] = useState(false);
+  const [title, setTitle] = useState("");
+  const [price, setPrice] = useState("");
+  const [darazLink, setDarazLink] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
 
-  useEffect(() => {
-    supabase.from("products").select("*").order("id", {ascending: false}).then(({ data }) => {
-      if (data) setProducts(data)
-    })
-  }, [])
+  useEffect(() => { fetchProducts(); }, []);
 
-  // YE NAYA FUNCTION - WhatsApp Notify karega
-  async function handleOrderClick(p:any) {
+  async function fetchProducts() {
+    const { data } = await supabase.from("products").select("*").order("id", { ascending: false });
+    if (data) setProducts(data);
+  }
+
+  async function handleOrderClick(p: any) {
     try {
       await fetch("/api/notify", {
         method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ name: p.name, price: p.price, link: p.daraz_link })
-      })
-    } catch(e) {}
-    window.open(p.daraz_link, "_blank")
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: p.name, price: p.price }),
+      });
+    } catch (e) {}
+    if (p.daraz_link) window.open(p.daraz_link, "_blank");
   }
 
-  return (
-    <div style={{ background: "#FAFAF7", minHeight: "100vh" }}>
-      {/* HEADER - Dark Green #1B3A2E */}
-      <header style={{ background: "#1B3A2E", padding: "18px 20px", position: "sticky", top: 0, zIndex: 10 }}>
-        <h1 style={{ color: "#FFFFFF", margin: 0, fontWeight: 800, letterSpacing: "1px" }}>AL SAFA TRADERS</h1>
-        <p style={{ color: "#FFFFFF", margin: "4px 0 0", opacity: 0.8, fontSize: 13 }}>alsafatraders.pk - Every</p>
-      </header>
+  function handleLogoClick() {
+    const newCount = clickCount + 1;
+    setClickCount(newCount);
+    if (newCount >= 5) { setShowOwner(true); setClickCount(0); }
+    setTimeout(() => setClickCount(0), 3000);
+  }
 
-      {/* PRODUCTS GRID - 2 col mobile, 4 col desktop */}
-      <main style={{ padding: 16, maxWidth: 1280, margin: "0 auto" }}>
-        {products.length === 0 ? (
-          <div style={{ textAlign: "center", marginTop: 80, color: "#2E2E2E" }}>
-            <h2>🙏 Abhi koi product nahi</h2>
-            <p>admin se pehla product add karo - 10 sec me yahan dikhega!</p>
-          </div>
-        ) : (
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-            gap: 16
-          }}>
-            {products.map((p: any) => (
-              <div key={p.id} style={{
-                background: "#FFFFFF",
-                borderRadius: 12,
-                overflow: "hidden",
-                boxShadow: "0 2px 10px rgba(0,0,0,0.06)",
-                position: "relative"
-              }}>
-                {/* SALE BADGE - Orange #FF6B35 top-left */}
-                {p.is_sale && (
-                  <span style={{
-                    position: "absolute", top: 8, left: 8,
-                    background: "#FF6B35", color: "#FF",
-                    padding: "3px 8px", borderRadius: 6,
-                    fontSize: 11, fontWeight: 700
-                  }}>SALE</span>
-                )}
-                <img src={p.image_url} alt={p.name} style={{ width: "100%", height: 160, objectFit: "cover" }} />
-                <div style={{ padding: 12 }}>
-                  <h3 style={{ color: "#2E2E2E", fontSize: 14, margin: "0 0 6px", height: 36, overflow: "hidden" }}>{p.name}</h3>
-                  <p style={{ color: "#2E2E2E", fontWeight: 800, margin: "0 0 10px" }}>Rs. {p.price}</p>
-                  <button onClick={()=>handleOrderClick(p)} style={{
-                    width: "100%", background: "#688F71", color: "#FFFFFF",
-                    border: "none", padding: "9px 0", borderRadius: 8,
-                    fontWeight: 700, cursor: "pointer"
-                  }}
-                  onMouseOver={e => (e.currentTarget.style.background = "#1B3A2E")}
-                  onMouseOut={e => (e.currentTarget.style.background = "#688F71")}>
-                  Order Now</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </main>
-      <style>{`@media(min-width: 768px){ main div{ grid-template-columns: repeat(4, 1fr) !important; } }`}</style>
-    </div>
-  )
-}
+  function unlockOwner() {
+    if (pass === "alsafa123") setIsOwner(true);
+    else alert("Galat password!");
+  }
+
+  async function addProduct() {
+    if (!title || !price || !darazLink || !imageUrl) { alert("Sare boxes bharo!"); return; }
+    const { error } = await supabase.from("products").insert([{ name: title, price: price, daraz_link: darazLink, image_url: imageUrl }]);
+    if (error) alert("Error: " + error.message);
+    else {
+      alert("Product Add Ho Gaya! ✅");
+      setTitle(""); setPrice(""); setDarazLink(""); setImageUrl("");
+      fetch
