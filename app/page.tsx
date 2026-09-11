@@ -1,127 +1,63 @@
-"use client";
-import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+"use client"
+import { useState, useEffect } from "react"
+import { createClient } from "@supabase/supabase-js"
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 export default function Home() {
-  const [products, setProducts] = useState<any[]>([]);
-  const [clickCount, setClickCount] = useState(0);
-  const [showOwner, setShowOwner] = useState(false);
-  const [pass, setPass] = useState("");
-  const [isOwner, setIsOwner] = useState(false);
-  const [title, setTitle] = useState("");
-  const [price, setPrice] = useState("");
-  const [darazLink, setDarazLink] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
-  const [search, setSearch] = useState("");
+  const [products, setProducts] = useState<any[]>([])
+  const [search, setSearch] = useState("")
 
-  useEffect(() => { fetchProducts(); }, []);
+  useEffect(() => {
+    const getProducts = async () => {
+      const { data } = await supabase.from("products").select("*").order("id", { ascending: false })
+      if (data) setProducts(data)
+    }
+    getProducts()
+  }, [])
 
-  async function fetchProducts() {
-    const { data } = await supabase.from("products").select("*").order("id", { ascending: false });
-    if (data) setProducts(data);
-  }
-
-  async function handleOrderClick(p: any) {
-    try {
-      await fetch("/api/notify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: p.name, price: p.price, link: p.daraz_link }) });
-    } catch {}
-    if (p.daraz_link) window.open(p.daraz_link, "_blank");
-  }
-
-  function handleLogoClick() {
-    const n = clickCount + 1; setClickCount(n);
-    if (n >= 5) { setShowOwner(true); setClickCount(0); }
-    setTimeout(() => setClickCount(0), 3000);
-  }
-  function unlockOwner() { if (pass === "alsafa123") setIsOwner(true); else alert("Galat password!"); }
-
-  async function addProduct() {
-    if (!title || !price || !darazLink || !imageUrl) { alert("Sare boxes bharo!"); return; }
-    const { error } = await supabase.from("products").insert([{ name: title, price, daraz_link: darazLink, image_url: imageUrl }]);
-    if (error) alert("Error: " + error.message);
-    else { alert("Product Add Ho Gaya! ✅"); setTitle(""); setPrice(""); setDarazLink(""); setImageUrl(""); fetchProducts(); }
-  }
-
-  const filtered = products.filter((p: any) => p.name.toLowerCase().includes(search.toLowerCase()));
+  const filtered = products.filter(p => p.title?.toLowerCase().includes(search.toLowerCase()))
 
   return (
-    <div style={{ background: "#FAFAF7", minHeight: "100vh" }}>
-      <header style={{ background: "#183A2E", padding: "18px 20px", position: "sticky", top: 0, zIndex: 10 }}>
-        <h1 onClick={handleLogoClick} style={{ color: "#FFFFFF", margin: 0, fontWeight: 800, cursor: "pointer" }}>AL SAFA TRADERS.pk</h1>
-        <p style={{ color: "#FFFFFF", margin: "4px 0 0", opacity: 0.8, fontSize: 13 }}>alsafatraders.pk - Everyday</p>
+    <div className="min-h-screen bg-[#E8F5E9]">
+      {/* Top strip - original */}
+      <div className="bg-[#E8F5E9] text-[11px] text-center py-1.5 tracking-widest text-[#1A3C34]">
+        LAUNCH • NEW ARRIVALS - FREE DELIVERY OVER RS.2000 - 16K+ HAPPY CUSTOMERS
+      </div>
+
+      {/* Header - original */}
+      <header className="bg-[#1A3C34] p-3 flex items-center gap-3 sticky top-0 z-20">
+        <div className="bg-[#FFC107] w-10 h-10 rounded-full flex items-center justify-center font-black text-[#1A3C34]">AS</div>
+        <div className="text-white font-black leading-none text-[16px]">Al Safa<br/>Traders.pk</div>
+        <div className="flex-1 bg-white rounded-full px-4 py-2.5 flex items-center gap-2 ml-2">
+          <span className="text-gray-400">🔍</span>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search chopper, storage, " className="w-full outline-none text-sm bg-transparent" />
+        </div>
+        {/* Wishlist hata di - sirf chat icon */}
+        <a href="/admin" className="bg-white w-10 h-10 rounded-full flex items-center justify-center text-sm">💬</a>
       </header>
 
-      <div style={{ padding: "16px", background: "white" }}>
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search chopper, storage, etc." style={{ width: "100%", padding: "12px 16px", borderRadius: "10px", border: "1px solid #ddd" }} />
+      <div className="bg-[#1A3C34] flex gap-2 p-2 overflow-x-auto">
+        <button className="bg-white px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap">Shop All</button>
+        <button className="text-white/70 px-4 py-2 text-sm whitespace-nowrap">Best Sellers</button>
+        <button className="text-white/70 px-4 py-2 text-sm whitespace-nowrap">Kitchen</button>
+        <button className="text-white/70 px-4 py-2 text-sm whitespace-nowrap">Storage & Organizers</button>
       </div>
 
-      <div style={{ display: "flex", gap: 8, padding: "10px 16px", overflowX: "auto", background: "white" }}>
-        {["Shop All", "Best Sellers", "Kitchen", "Storage & Organizers"].map((c) => (
-          <span key={c} style={{ whiteSpace: "nowrap", padding: "8px 14px", borderRadius: 20, background: c === "Shop All" ? "#183A2E" : "#f1f1f1", color: c === "Shop All" ? "white" : "black", fontSize: 13, fontWeight: 600 }}>{c}</span>
-        ))}
-      </div>
-
-      <div style={{ margin: "16px", background: "#D6E8D0", borderRadius: 16, padding: 20, display: "flex", flexWrap: "wrap", gap: 16 }}>
-        <div style={{ flex: 1, minWidth: 260 }}>
-          <p style={{ fontSize: 11, fontWeight: 700, background: "white", display: "inline-block", padding: "4px 8px", borderRadius: 12 }}>2.5M+ HOME COOKS | 155K+ 5-STAR REVIEWS</p>
-          <h2 style={{ fontSize: 26, fontWeight: 800, color: "#183A2E", marginTop: 10 }}>Everyday Kitchen Essentials for <span style={{ background: "#FFD700", padding: "0 6px" }}>Smart Homes</span></h2>
-          <p style={{ fontSize: 13, marginTop: 6 }}>اسمارٹ ہومز کے لیے روزمرہ کے کچن کے ضروری سامان - معیاری، سستا، قابل اعتماد</p>
-        </div>
-        <div style={{ flex: 1, minWidth: 260, background: "white", borderRadius: 12, overflow: "hidden", position: "relative" }}>
-          <img src="https://images.unsplash.com/photo-1556911220-bff31c812dba?w=600" alt="kitchen" style={{ width: "100%", height: 220, objectFit: "cover" }} />
-          <span style={{ position: "absolute", top: 8, right: 8, background: "#E8F5E9", padding: "4px 8px", borderRadius: 12, fontSize: 11, fontWeight: 700 }}>FREE DELIVERY &gt; RS.2000</span>
-        </div>
-      </div>
-
-      <main style={{ padding: 16, maxWidth: 1280, margin: "0 auto" }}>
-        <h2 style={{ fontWeight: 800, fontSize: 18, color: "#183A2E" }}>Featured Products</h2>
-        {filtered.length === 0 ? (
-          <div style={{ textAlign: "center", marginTop: 30, background: "white", padding: 30, borderRadius: 12 }}>
-            <h2>🙏 Abhi koi product nahi</h2><p>admin se pehla product add karo - 10 sec me yahan dikhega!</p>
+      <main className="max-w-6xl mx-auto p-4">
+        {/* YEHI ADD KIYA HAI - BAAD MEIN KUCH CHANGE NAHI */}
+        <div className="mt-2">
+          <div className="inline-block bg-white/80 px-4 py-1.5 rounded-full text-[11px] tracking-widest mb-4 font-bold text-[#1A3C34]">
+            2.5M+ HOME COOKS | 155K+ 5 STAR REVIEWS
           </div>
-        ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 16, marginTop: 16 }}>
-            {filtered.map((p: any) => (
-              <div key={p.id} style={{ background: "#FFFFFF", borderRadius: 12, overflow: "hidden", boxShadow: "0 2px 10px rgba(0,0,0,0.06)" }}>
-                <img src={p.image_url} alt={p.name} style={{ width: "100%", height: 160, objectFit: "cover" }} />
-                <div style={{ padding: 12 }}>
-                  <h3 style={{ fontSize: 14, margin: "0 0 6px", height: 36, overflow: "hidden" }}>{p.name}</h3>
-                  <p style={{ fontWeight: 800, margin: "0 0 10px" }}>Rs. {p.price}</p>
-                  <button onClick={() => handleOrderClick(p)} style={{ width: "100%", background: "#668F71", color: "#FFFFFF", border: "none", padding: "9px 0", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}>Order Now</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </main>
 
-      {showOwner && (
-        <div style={{ padding: 16, background: "#fff", borderTop: "2px dashed #ccc", marginTop: 20 }}>
-          {!isOwner ? (
-            <div><input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="Owner password" style={{ padding: 8, borderRadius: 6, border: "1px solid #ccc" }} /><button onClick={unlockOwner} style={{ marginLeft: 8, padding: "8px 12px" }}>Unlock</button></div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 400 }}>
-              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Product Title" style={{ padding: 8 }} />
-              <input value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Price e.g 899" style={{ padding: 8 }} />
-              <input value={darazLink} onChange={(e) => setDarazLink(e.target.value)} placeholder="Daraz Link" style={{ padding: 8 }} />
-              <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="Image URL" style={{ padding: 8 }} />
-              <button onClick={addProduct} style={{ background: "#183A2E", color: "white", padding: 10, borderRadius: 8 }}>Add Product</button>
-            </div>
-          )}
-        </div>
-      )}
+          {/* ADD 1: Welcome */}
+          <h1 className="text-[28px] font-black text-[#1A3C34]">Welcome to Safa traders ♥️</h1>
 
-      <footer style={{ background: "#183A2E", color: "white", padding: "30px 16px", marginTop: 30, textAlign: "center" }}>
-        <h3 style={{ marginBottom: 12 }}>Follow Us</h3>
-        <div style={{ display: "flex", justifyContent: "center", gap: 20, alignItems: "center", flexWrap: "wrap" }}>
-          <a href="https://www.facebook.com/share/1Gk2xgPiMF/?mibextid=wwXIfr" target="_blank" style={{ color: "white", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}><img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" width="24" /> Facebook</a>
-          <a href="https://www.instagram.com/alsafatraders.pk?stkn=MXd0MGRlYzF4MXhvbg%3D%3D&utm_source=qr" target="_blank" style={{ color: "white", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}><img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" width="24" /> Instagram</a>
-          <a href="https://www.tiktok.com/@faizanjutt6686?_r=1&_t=ZS-99df7jRqXWX" target="_blank" style={{ color: "white", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}><img src="https://cdn.simpleicons.org/tiktok/white" width="24" /> TikTok</a>
-          <a href="mailto:alsafatraders7@gmail.com" style={{ color: "white", textDecoration: "none" }}>✉️ alsafatraders7@gmail.com</a>
-        </div>
-        <p style={{ marginTop: 16, fontSize: 12, opacity: 0.7 }}>© 2024 Al Safa Traders.pk — All Rights Reserved</p>
-      </footer>
-    </div>
-  );
-}
+          {/* ADD 2: Original promo - same size */}
+          <h2 className="text-[38px] md:text-[48px] font-black text-[#1A3C34] leading-[0.95] mt-1">
+            Everyday Kitchen<br/>
+            Essentials for <span className="bg-[#FFEB3B] px-2
