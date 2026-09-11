@@ -1,19 +1,32 @@
-export default function Home(){
-return(
-<main style={{minHeight:"100vh", background:"#FFFBEB"}}>
-<header style={{background:"#1B4332", color:"white", padding:"16px 24px", display:"flex", justifyContent:"space-between", alignItems:"center"}}>
-<h1 style={{fontWeight:"900", letterSpacing:"3px"}}>AL SAFA TRADERS</h1>
-<button style={{background:"#8FA998", color:"white", padding:"8px 20px", borderRadius:"999px", fontWeight:"700"}}>Cart (0)</button>
-</header>
-<section style={{textAlign:"center", padding:"80px 20px"}}>
-<h2 style={{fontSize:"48px", fontWeight:"800", color:"#1B4332"}}>Everyday Kitchen Essentials</h2>
-<p style={{color:"#666", marginTop:"10px"}}>Curated for Pakistani homes worldwide.</p>
-</section>
-<div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(250px, 1fr))", gap:"20px", maxWidth:"1100px", margin:"0 auto", padding:"0 24px 80px"}}>
-<div style={{background:"white", borderRadius:"16px", padding:"20px", border:"1px solid #eee"}}><h3>Wooden Spice Rack</h3><div style={{background:"#FF6B35", color:"white", display:"inline-block", padding:"2px 8px", borderRadius:"10px", fontSize:"11px", marginTop:"8px"}}>SALE</div><br/><button style={{marginTop:"12px", background:"#8FA998", color:"white", padding:"8px 16px", borderRadius:"20px", border:"none"}}>Add to Cart</button></div>
-<div style={{background:"white", borderRadius:"16px", padding:"20px", border:"1px solid #eee"}}><h3>Storage Jars Set</h3><button style={{marginTop:"12px", background:"#8FA998", color:"white", padding:"8px 16px", borderRadius:"20px", border:"none"}}>Add to Cart</button></div>
-<div style={{background:"white", borderRadius:"16px", padding:"20px", border:"1px solid #eee"}}><h3>Kitchen Organizer</h3><button style={{marginTop:"12px", background:"#8FA998", color:"white", padding:"8px 16px", borderRadius:"20px", border:"none"}}>Add to Cart</button></div>
-</div>
-</main>
-)
-}
+AL SAFA TRADERS - FINAL THEME & DETAILS
+
+Website Name: Al Safa Traders
+Domain: alsafatraders.pk
+【entity-GitHub¦canonical_name=GitHub】 Repo: alsafatraders7/alsafa-traders
+
+THEME COLORS (Jo aapne bola tha wahi):
+- Header / Navbar: Dark Green #1B3A2E
+- Main Background: Cream #FAFAF7
+- Product Cards: White #FFFFFF
+- Add to Cart / Order Now Button: Sage Green #6B8F71
+- Sale / Discount Badge: Orange #FF6B35
+- Text Color: Charcoal #2E2E2E
+
+STYLE DETAILS (Jo aapne boli thi):
+- Look: Noon.com jaisa Professional & Clean
+- Product Grid: 2 column mobile, 4 column desktop, White cards with shadow
+- Sale Badge Orange color me top-left corner par
+- Button Sage Green, hover par Dark Green ho jaye
+- Header Dark Green, us par White logo/text
+- Background pura Cream rahega
+- Font: Clean, Bold headings Charcoal color me
+
+FEATURES JO ADD KARNE HAIN:
+1. Daraz Affiliate Link (s.daraz.pk/s.XXXX?cc wala)
+2. Owner Panel - Phone OTP Login (03XX wala)
+3. Wishlist Heart icon
+4. Support / WhatsApp Chat Button
+5. Search + Category Filter
+6. Supabase se products aayenge
+
+Yehi final theme hai, iske ilawa koi color add nahi karna.
