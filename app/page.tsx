@@ -63,9 +63,11 @@ export default function Home() {
       </main>
 
       <footer className="mt-10 bg-white p-6 text-center">
-        <div className="flex justify-center gap-4 text-xs font-bold">
+        <div className="flex flex-wrap justify-center gap-4 text-xs font-bold">
+          <a href="https://www.facebook.com/61593603578150" target="_blank" className="underline">Facebook: Al Safa Traders</a>
           <a href="https://www.tiktok.com/@alsafatraders.pk" target="_blank" className="underline">TikTok @alsafatraders.pk</a>
-          <a href="https://instagram.com/alsafatraders.pk" target="_blank">Instagram</a>
+          <a href="https://instagram.com/alsafatraders.pk" target="_blank" className="underline">【entity-Instagram¦canonical_name=Instagram】</a>
+          <a href="mailto:alsafatraders.pk@gmail.com" className="underline">Email: alsafatraders.pk@gmail.com</a>
         </div>
       </footer>
     </div>
