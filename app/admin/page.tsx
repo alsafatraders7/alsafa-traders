@@ -1,43 +1,32 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 
-const LOCKED = "alsafatraders7@gmail.com"
-
-export default function FullAdmin(){
-  const [ok,setOk]=useState(false)
-  const [email,setEmail]=useState("")
-  const [pass,setPass]=useState("")
-  const [tab,setTab]=useState("dashboard")
-  const [showForgot,setShowForgot]=useState(false)
-  const [otp,setOtp]=useState("")
-  const [otpIn,setOtpIn]=useState("")
-  const [newP,setNewP]=useState("")
-  
-  // Dummy data for now - Supabase ke bina bhi Dashboard chalega
-  const [views,setViews]=useState(187)
-  const [products,setProducts]=useState<any[]>([])
-
-  useEffect(()=>{
-    const isOk = localStorage.getItem("safa_ok")==="1"
-    if(isOk) setOk(true)
-    const v = Number(localStorage.getItem("safa_views")||"187")
-    setViews(v+1); localStorage.setItem("safa_views",String(v+1))
-    const saved = localStorage.getItem("safa_products")
-    if(saved) setProducts(JSON.parse(saved))
-  },[])
+export default function Page(){
+  const [ok,setOk] = useState(false)
+  const [e,setE] = useState("")
+  const [p,setP] = useState("")
 
   const login=()=>{
-    const savedPass = localStorage.getItem("safa_pass") || "alsafa123"
-    if(email.toLowerCase().trim() !== LOCKED){
-      alert("Email: "+LOCKED+" hi likhna hai"); return
+    if(e==="alsafatraders7@gmail.com" && (p==="alsafa123" || p==="Faizan8048")){
+      setOk(true)
+      localStorage.setItem("safa_ok","1")
+    } else {
+      alert("Email: alsafatraders7@gmail.com\nPass: alsafa123")
     }
-    if(pass !== savedPass && pass !== "Faizan8048"){
-      alert("Password: alsafa123 ya Faizan8048"); return
-    }
-    localStorage.setItem("safa_ok","1")
-    setOk(true)
   }
 
-  const sendOTP=()=>{
-    const code = Math.floor(100000+Math.random()*900000).toString()
-    setOtp(code)
+  if(!ok){
+    return (
+      <div style={{background:"black",minHeight:"100vh",display:"flex",justifyContent:"center",alignItems:"center"}}>
+        <div style={{background:"white",padding:30,borderRadius:20,width:350}}>
+          <h2 style={{fontWeight:900}}>Al Safa Admin</h2>
+          <input value={e} onChange={ev=>setE(ev.target.value)} placeholder="alsafatraders7@gmail.com" style={{width:"100%",padding:12,border:"1px solid #ccc",borderRadius:10,marginTop:20}}/>
+          <input value={p} onChange={ev=>setP(ev.target.value)} type="password" placeholder="alsafa123" style={{width:"100%",padding:12,border:"1px solid #ccc",borderRadius:10,marginTop:10}}/>
+          <button onClick={login} style={{width:"100%",background:"black",color:"white",padding:14,borderRadius:100,marginTop:15,fontWeight:900}}>LOGIN</button>
+        </div>
+      </div>
+    )
+  }
+
+  return <div style={{padding:30}}><h1 style={{fontWeight:900,fontSize:24}}>Login Ho Gaya! ✅</h1><p style={{marginTop:10}}>Ab bolo - Main pura Product wala Final Code isi me daal dun!</p><button onClick={()=>{localStorage.clear(); setOk(false)}} style={{marginTop:20,background:"red",color:"white",padding:"10px 20px",borderRadius:20}}>Logout</button></div>
+}
