@@ -33,7 +33,6 @@ export default function Home() {
           <span>🔍</span>
           <input value={search} onChange={(e)=>setSearch(e.target.value)} placeholder="Search chopper, storage," className="w-full outline-none text-sm bg-transparent" />
         </div>
-        <a href="/admin" className="bg-white w-10 h-10 rounded-full flex items-center justify-center text-sm">💬</a>
       </header>
 
       <div className="bg-[#1A3C34] flex gap-2 p-2 overflow-x-auto">
@@ -46,23 +45,18 @@ export default function Home() {
       <main className="max-w-6xl mx-auto p-4 grid md:grid-cols-2 gap-6 items-start">
         <div>
           <div className="bg-white/80 inline-block px-4 py-1 rounded-full text-[11px] font-bold mb-4">2.5M+ HOME COOKS | 155K+ 5 STAR REVIEWS</div>
-
           <h1 className="text-[26px] font-black text-[#1A3C34]">Welcome to Safa traders</h1>
-
           <h2 className="text-[38px] font-black text-[#1A3C34] leading-[0.9] mt-2">
             Everyday Kitchen<br/>Essentials for <span className="bg-[#FFEB3B] px-2">Smart Homes</span>
           </h2>
-
           <p className="text-[#1A3C34]/80 mt-4 text-[15px]">
             Ghar ke kaam asan banayen! Premium quality choppers, strainers, storage & organizers - jo har kitchen me chahiye.
           </p>
-
           <div className="flex gap-3 mt-6">
             <button className="bg-[#1A3C34] text-white px-6 py-3 rounded-full font-bold text-sm">Shop New Arrivals</button>
             <button className="bg-white px-6 py-3 rounded-full font-bold text-sm">Shop Best Sellers</button>
           </div>
         </div>
-
         <div className="bg-white rounded-[24px] overflow-hidden shadow-sm">
           <img src="https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=800" className="w-full h-[450px] object-cover" alt="Kitchen" />
         </div>
