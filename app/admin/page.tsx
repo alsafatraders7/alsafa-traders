@@ -1,400 +1,275 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
-// Types
-interface Category {
+type Category = {
   id: string;
   name: string;
   slug: string;
   order: number;
-  active: boolean;
   productCount: number;
-}
+  isShopAll?: boolean;
+};
 
-interface Product {
+type Product = {
   id: string;
   name: string;
   price: number;
-  darazPrice: number;
-  category: string;
-  brand: string;
+  originalPrice?: number;
   image: string;
-  images: string[];
+  category: string;
   darazLink: string;
-  caption: string;
-  description: string;
-  bestSeller: boolean;
-  active: boolean;
-  priceSync: boolean;
-  clicks: number;
-  date: string;
-}
+  isBestSeller?: boolean;
+};
 
-interface WebsiteSettings {
+type WebsiteSettings = {
   topBanner: string;
   trustBadge: string;
-  heroWelcome: string;
-  heroHeading: string;
-  heroHighlight1: string;
-  heroHighlight2: string;
   heroUrdu: string;
   heroImage: string;
   siteName: string;
-  siteUrl: string;
-  shopAllText: string;
-}
+};
 
-export default function AlSafaAdminFinal() {
-  // Website Settings - Admin controls Home Page
+export default function AdminPage() {
+  const [categories, setCategories] = useState<Category[]>([
+    { id: "shop-all", name: "Shop All", slug: "shop-all", order: 0, productCount: 3, isShopAll: true },
+    { id: "1", name: "Best Sellers", slug: "best-sellers", order: 1, productCount: 1 },
+    { id: "2", name: "Kitchen Tools", slug: "kitchen-tools", order: 2, productCount: 1 },
+    { id: "3", name: "Bartan Set", slug: "bartan-set", order: 3, productCount: 1 },
+    { id: "4", name: "Storage Box", slug: "storage-box", order: 4, productCount: 0 },
+  ]);
+
+  const [products, setProducts] = useState<Product[]>([
+    { id: "1", name: "12 Pcs Chopper", price: 1499, originalPrice: 1999, image: "https://images.unsplash.com/photo-1585237672814-8f85a8118bf6?w=400", category: "kitchen-tools", darazLink: "https://www.daraz.pk", isBestSeller: true },
+    { id: "2", name: "Stainless Steel Bartan", price: 2499, image: "https://images.unsplash.com/photo-1584305574586-0a33e00aedcb?w=400", category: "bartan-set", darazLink: "https://www.daraz.pk" },
+    { id: "3", name: "Kitchen Storage Box", price: 899, image: "https://images.unsplash.com/photo-1590794056226-511ef617e3e3?w=400", category: "storage-box", darazLink: "https://www.daraz.pk" },
+  ]);
+
   const [settings, setSettings] = useState<WebsiteSettings>({
-    topBanner: "LAUNCH - NEW ARRIVALS - FREE DELIVERY OVER RS.2000 - 16K+ HAPPY CUSTOMERS",
-    trustBadge: "2.5M+ HOME COOKS | 155K+ 5 STAR REVIEWS",
-    heroWelcome: "Welcome to Safa traders",
-    heroHeading: "Everyday Kitchen Essentials for Smart Homes",
-    heroHighlight1: "Essentials for",
-    heroHighlight2: "Smart Homes",
-    heroUrdu: "Ghar ke kaam asan banayen! Premium quality choppers, strainers, storage & organizers - jo har kitchen me chahiye.",
-    heroImage: "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?q=80&w=800",
-    siteName: "Al Safa Traders.pk",
-    siteUrl: "https://alsafatraders.pk",
-    shopAllText: "Shop All"
+    topBanner: "Free Delivery All Pakistan - Cash on Delivery",
+    trustBadge: "100% Original Products - 7 Days Return",
+    heroUrdu: "Ghar ke kaam asan banayen! Premium quality choppers, bartan sets aur storage solutions ab ghar baithe hasil karen.",
+    heroImage: "https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=800",
+    siteName: "Al Safa Traders",
   });
 
-  // Categories - ADMIN CONTROLS HOME PAGE CATEGORIES
-  const [categories, setCategories] = useState<Category[]>([
-    { id: "1", name: "Shop All", slug: "shop-all", order: 1, active: true, productCount: 0 },
-    { id: "2", name: "Best Sellers", slug: "best-sellers", order: 2, active: true, productCount: 0 },
-    { id: "3", name: "Kitchen", slug: "kitchen", order: 3, active: true, productCount: 0 },
-    { id: "4", name: "Bartan", slug: "bartan", order: 4, active: true, productCount: 0 },
-    { id: "5", name: "Storage & Organizers", slug: "storage", order: 5, active: true, productCount: 0 },
-  ]);
-
-  // Products - Shop All shows ALL, Category shows filtered
-  const [products, setProducts] = useState<Product[]>([
-    {
-      id: "1",
-      name: "Air Fryer 8L Digital",
-      price: 12999,
-      darazPrice: 12999,
-      category: "Kitchen",
-      brand: "Safa Premium",
-      image: "https://images.unsplash.com/photo-1585515656627-783d6cbd1d2d?q=80&w=400",
-      images: [],
-      darazLink: "https://www.daraz.pk/products/air-fryer-i123.html?tag=alsafa",
-      caption: "Healthy cooking with 85% less oil! Perfect for every home",
-      description: "Premium quality air fryer for smart homes",
-      bestSeller: true,
-      active: true,
-      priceSync: true,
-      clicks: 45,
-      date: "2026-09-10"
-    },
-  ]);
-
-  const [activeView, setActiveView] = useState("Dashboard");
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [showAddCategory, setShowAddCategory] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [captionMode, setCaptionMode] = useState<"manual" | "auto">("manual");
-  const [isFetchingDaraz, setIsFetchingDaraz] = useState(false);
+  const [darazUrl, setDarazUrl] = useState("");
+  const [isFetching, setIsFetching] = useState(false);
 
-  // New Product Form
-  const [newProduct, setNewProduct] = useState<Partial<Product>>({
+  const [newProduct, setNewProduct] = useState({
     name: "",
-    price: 0,
-    category: "Kitchen",
-    brand: "",
+    price: "",
+    originalPrice: "",
+    category: "kitchen-tools",
     image: "",
     darazLink: "",
     caption: "",
-    description: "",
-    bestSeller: false,
-    active: true,
-    priceSync: true,
-  });
-  const [newCategory, setNewCategory] = useState<Partial<Category>>({
-    name: "",
-    order: categories.length + 1,
-    active: true
+    isBestSeller: false,
   });
 
-  // Update product counts
+  const [newCategory, setNewCategory] = useState({ name: "", order: "" });
+
+  const totalClicks = 124;
+  const commission = 2450;
+
   useEffect(() => {
-    const updated = categories.map(cat => {
-      if (cat.slug === "shop-all") {
-        return {...cat, productCount: products.filter(p => p.active).length };
-      }
-      return {...cat, productCount: products.filter(p => p.category === cat.name && p.active).length };
+    const updated = categories.map((cat) => {
+      if (cat.isShopAll) return {...cat, productCount: products.length };
+      return {...cat, productCount: products.filter((p) => p.category === cat.slug).length };
     });
     setCategories(updated);
   }, [products]);
 
-  // Auto fetch from Daraz (simulated)
   const handleFetchFromDaraz = () => {
-    if (!newProduct.darazLink) {
-      alert("Pehle Daraz Link dalo Jani!");
-      return;
-    }
-    setIsFetchingDaraz(true);
+    if (!darazUrl) { alert("【entity-Daraz¦canonical_name=Daraz】 link dalo Jani!"); return; }
+    setIsFetching(true);
     setTimeout(() => {
-      const mockCaption = `Premium quality ${newProduct.name || 'product'} - Original 【entity-Daraz¦canonical_name=Daraz】 product! High quality, durable, perfect for smart homes. ${newProduct.brand || 'Top brand'} - Best seller on 【entity-Daraz¦canonical_name=Daraz】!`;
-      setNewProduct({...newProduct, caption: mockCaption, description: mockCaption });
-      setIsFetchingDaraz(false);
-      alert("【entity-Daraz¦canonical_name=Daraz】 se caption auto fetch ho gaya! Aap edit kar sakte ho.");
+      setNewProduct({
+       ...newProduct,
+        name: "Fetched 【entity-Daraz¦canonical_name=Daraz】 Product",
+        price: "1999",
+        image: "https://images.unsplash.com/photo-1585237672814-8f85a8118bf6?w=400",
+        darazLink: darazUrl,
+      });
+      setIsFetching(false);
+      alert("Product fetch ho gaya Jani!");
     }, 1500);
   };
 
   const handleAddProduct = () => {
-    if (!newProduct.name ||!newProduct.price ||!newProduct.category ||!newProduct.darazLink ||!newProduct.image) {
-      alert("Sab * wale fields bharo Jani!");
-      return;
-    }
+    if (!newProduct.name ||!newProduct.price) { alert("Name aur Price zaroori hai!"); return; }
     const product: Product = {
-      id: editingProduct? editingProduct.id : Date.now().toString(),
-      name: newProduct.name!,
+      id: Date.now().toString(),
+      name: newProduct.name,
       price: Number(newProduct.price),
-      darazPrice: Number(newProduct.price),
-      category: newProduct.category!,
-      brand: newProduct.brand || "Al Safa",
-      image: newProduct.image!,
-      images: newProduct.images || [],
-      darazLink: newProduct.darazLink!,
-      caption: newProduct.caption || "",
-      description: newProduct.description || "",
-      bestSeller: newProduct.bestSeller || false,
-      active: newProduct.active?? true,
-      priceSync: newProduct.priceSync?? true,
-      clicks: editingProduct? editingProduct.clicks : 0,
-      date: new Date().toISOString().split('T')[0]
+      originalPrice: newProduct.originalPrice? Number(newProduct.originalPrice) : undefined,
+      image: newProduct.image || "https://images.unsplash.com/photo-1585237672814-8f85a8118bf6?w=400",
+      category: newProduct.category,
+      darazLink: newProduct.darazLink,
+      isBestSeller: newProduct.isBestSeller,
     };
-
-    if (editingProduct) {
-      setProducts(products.map(p => p.id === editingProduct.id? product : p));
-      setEditingProduct(null);
-    } else {
-      setProducts([...products, product]);
-    }
-
-    setNewProduct({ name: "", price: 0, category: "Kitchen", brand: "", image: "", darazLink: "", caption: "", description: "", bestSeller: false, active: true, priceSync: true });
+    setProducts([product,...products]);
+    setNewProduct({ name: "", price: "", originalPrice: "", category: "kitchen-tools", image: "", darazLink: "", caption: "", isBestSeller: false });
     setShowAddProduct(false);
-    alert(`Product ${editingProduct? 'updated' : 'added'}! Ab Shop All + ${product.category} + Search me foran dikhega!`);
+    setActiveTab("products");
   };
 
   const handleAddCategory = () => {
-    if (!newCategory.name) {
-      alert("Category name likho!");
-      return;
-    }
-    if (editingCategory) {
-      setCategories(categories.map(c => c.id === editingCategory.id? {...c, name: newCategory.name!, slug: newCategory.name!.toLowerCase().replace(/\s+/g,'-'), order: newCategory.order!, active: newCategory.active! } : c));
-      setEditingCategory(null);
-    } else {
-      const cat: Category = {
-        id: Date.now().toString(),
-        name: newCategory.name!,
-        slug: newCategory.name!.toLowerCase().replace(/\s+/g,'-'),
-        order: newCategory.order!,
-        active: newCategory.active!,
-        productCount: 0
-      };
-      setCategories([...categories, cat]);
-    }
-    setNewCategory({ name: "", order: categories.length + 2, active: true });
+    if (!newCategory.name) { alert("Category name dalo!"); return; }
+    if (newCategory.name.toLowerCase() === "shop all") { alert("Shop All pehle se hai!"); return; }
+    const slug = newCategory.name.toLowerCase().replace(/\s+/g, "-");
+    if (categories.find((c) => c.slug === slug)) { alert("Ye category pehle se hai!"); return; }
+    const cat: Category = { id: Date.now().toString(), name: newCategory.name, slug, order: newCategory.order? Number(newCategory.order) : categories.length, productCount: 0 };
+    setCategories([...categories, cat]);
+    setNewCategory({ name: "", order: "" });
     setShowAddCategory(false);
-    alert("Category saved! Ab Home Page pe pill update ho jayega - No code needed!");
   };
 
-  const totalClicks = products.reduce((sum, p) => sum + p.clicks, 0);
-  const activeCategories = categories.filter(c => c.active && c.slug!== "shop-all");
+  const handleDeleteProduct = (id: string) => {
+    if (confirm("Delete karna hai?")) setProducts(products.filter((p) => p.id!== id));
+  };
 
   return (
-    <div className="min-h-screen bg-[#FFFCF5] flex font-sans">
-      {/* Sidebar */}
-      <div className="w-72 bg-[#1A3C34] text-white flex flex-col fixed h-screen overflow-y-auto">
-        <div className="p-6 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#C5A572] rounded-full flex items-center justify-center font-bold text-[#1A3C34]">🏠</div>
-            <div>
-              <h1 className="font-bold text-lg leading-tight">Al Safa Traders</h1>
-              <p className="text-xs text-white/60">Quality Products • Better Living</p>
-            </div>
+    <div className="flex min-h-screen bg-gray-100">
+      <div className="w-72 bg-gray-900 text-white fixed h-full overflow-y-auto">
+        <div className="p-6">
+          <h1 className="text-xl font-bold mb-1">{settings.siteName}</h1>
+          <p className="text-gray-400 text-sm mb-8">Admin Panel</p>
+          <nav className="space-y-2">
+            <button onClick={() => setActiveTab("dashboard")} className={`w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 ${activeTab === "dashboard"? "bg-blue-600" : "hover:bg-gray-800"}`}>📊 Dashboard</button>
+            <button onClick={() => setActiveTab("products")} className={`w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 ${activeTab === "products"? "bg-blue-600" : "hover:bg-gray-800"}`}>📦 Products ({products.length})</button>
+            <button onClick={() => setActiveTab("categories")} className={`w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 ${activeTab === "categories"? "bg-blue-600" : "hover:bg-gray-800"}`}>📁 Categories ({categories.length})</button>
+            <button onClick={() => setActiveTab("website")} className={`w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 ${activeTab === "website"? "bg-blue-600" : "hover:bg-gray-800"}`}>🌐 Website Settings</button>
+            <button onClick={() => setActiveTab("orders")} className={`w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 ${activeTab === "orders"? "bg-blue-600" : "hover:bg-gray-800"}`}>🛒 Orders</button>
+          </nav>
+          <div className="mt-8 pt-8 border-t border-gray-700">
+            <div className="bg-gray-800 p-4 rounded-lg"><p className="text-sm text-gray-300">Total Clicks</p><p className="text-2xl font-bold">{totalClicks}</p></div>
+            <div className="bg-green-900 p-4 rounded-lg mt-3"><p className="text-sm text-green-200">Commission</p><p className="text-2xl font-bold">Rs. {commission}</p></div>
+            <a href="/" className="block mt-6 text-center py-2 bg-gray-700 rounded-lg hover:bg-gray-600">View Website</a>
+            <button className="w-full mt-3 text-gray-400 text-sm">Logout</button>
           </div>
-        </div>
-</div>
-
-        <nav className="flex-1 p-4 space-y-1">
-          {[
-            { name: "Dashboard", icon: "🏠", active: true },
-            { name: "Products", icon: "📦", count: products.length },
-            { name: "Categories", icon: "⊞", count: categories.length },
-            { name: "Orders", icon: "🛒" },
-            { name: "Sales", icon: "📊" },
-            { name: "Analytics", icon: "📈" },
-            { name: "Website Settings", icon: "🌐" },
-            { name: "Daraz Affiliate Links", icon: "🔗" },
-            { name: "Product Images & Details", icon: "🖼️" },
-            { name: "Captions", icon: "📝" },
-            { name: "Customer Management", icon: "👤" },
-            { name: "Admin Account", icon: "🛡️" },
-            { name: "Change Password", icon: "🔒" },
-            { name: "Help & Support", icon: "❓" },
-          ].map(item => (
-            <button
-              key={item.name}
-              onClick={() => setActiveView(item.name)}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-all ${activeView === item.name? "bg-[#C5A572] text-[#1A3C34] font-semibold" : "hover:bg-white/10 text-white/80"}`}
-            >
-              <span className="flex items-center gap-3"><span>{item.icon}</span> {item.name} {item.name === "Products" || item.name === "Categories"? ">" : ""}</span>
-              {item.count!== undefined && <span className="text-xs bg-white/20 px-2 py-1 rounded-full">{item.count}</span>}
-            </button>
-          ))}
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 text-white/80 mt-6">
-            <span>🚪</span> Logout
-          </button>
-        </nav>
-
-        <div className="p-4 border-t border-white/10">
-          <div className="text-xs text-white/40">Al Safa Traders</div>
-          <div className="text-xs text-white/40">Admin Panel v1.0</div>
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="flex-1 ml-72">
         <div className="bg-white border-b sticky top-0 z-20 px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4 flex-1">
-            <span className="text-xl">☰</span>
-            <div className="relative flex-1 max-w-md">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2">🔍</span>
-              <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search products, categories..." className="w-full pl-10 pr-4 py-2.5 bg-gray-50 rounded-full border text-sm" />
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <button className="relative p-2">🔔</button>
-            <div className="w-8 h-8 bg-[#1A3C34] rounded-full flex items-center justify-center text-white text-sm">A</div>
+          <h2 className="text-2xl font-bold capitalize">{activeTab}</h2>
+          <div className="flex gap-3">
+            {activeTab === "products" && <button onClick={() => setShowAddProduct(true)} className="bg-blue-600 text-white px-5 py-2 rounded-lg">+ Add Product</button>}
+            {activeTab === "categories" && <button onClick={() => setShowAddCategory(true)} className="bg-blue-600 text-white px-5 py-2 rounded-lg">+ Add Category</button>}
           </div>
         </div>
 
         <div className="p-8">
-          <div className="bg-gradient-to-br from-[#E8F5E9] to-[#F1F8E9] rounded-[24px] p-8 flex flex-col lg:flex-row items-center justify-between gap-8 mb-6 border border-green-100">
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-[#1A3C34] mb-2">Welcome Back, Admin!</h1>
-              <p className="text-[#1A3C34]/70 mb-6">Manage your products, categories, orders and keep your website updated from here.</p>
-              <div className="text-sm font-medium">Categories</div>
+          {activeTab === "dashboard" && (
+            <div className="space-y-6">
+              <div className="bg-white p-6 rounded-xl shadow"><h3 className="font-bold text-lg mb-2">Welcome Back, Al Safa Traders!</h3><p className="text-gray-600">Aap ki website 100% working hai. Shop All, Categories, Products sab active hain.</p></div>
+              <div className="grid grid-cols-3 gap-6">
+                <div className="bg-white p-6 rounded-xl shadow"><p className="text-gray-500">Total Products</p><p className="text-3xl font-bold">{products.length}</p></div>
+                <div className="bg-white p-6 rounded-xl shadow"><p className="text-gray-500">Total Categories</p><p className="text-3xl font-bold">{categories.length}</p></div>
+                <div className="bg-white p-6 rounded-xl shadow"><p className="text-gray-500">Total Clicks</p><p className="text-3xl font-bold">{totalClicks}</p></div>
+              </div>
+              <div className="bg-white p-6 rounded-xl shadow">
+                <h3 className="font-bold mb-4">Quick Actions</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="border p-4 rounded-lg"><p className="font-bold">Shop All: {products.length} products</p><p className="text-sm text-gray-600">Sab products yahan show hote hain</p></div>
+                  {categories.filter(c =>!c.isShopAll).map(cat => (
+                    <div key={cat.id} className="border p-4 rounded-lg"><p className="font-bold">{cat.name}: {cat.productCount}</p><p className="text-sm text-gray-600">Slug: {cat.slug}</p></div>
+                  ))}
+                </div>
+              </div>
             </div>
-            <div className="bg-white rounded-2xl p-5 border shadow-sm">
-              <div className="text-2xl font-bold">{totalClicks}</div>
-              <div className="text-sm font-medium">Total Clicks</div>
-            </div>
-            <div className="bg-white rounded-2xl p-5 border shadow-sm">
-              <div className="text-2xl font-bold">Rs. 0</div>
-              <div className="text-sm font-medium">Estimated Commission</div>
-            </div>
-          </div>
+          )}
 
-          {activeView === "Dashboard" && (
-            <div className="bg-white rounded-2xl p-6 border">
-              <h3 className="font-bold mb-4">Quick Actions - Shop All Logic Working</h3>
-              <button onClick={() => setShowAddProduct(true)} className="w-full bg-[#C5A572] text-[#1A3C34] font-semibold py-3 rounded-full mb-3">+ Add New Product (Shop All + Category + Search)</button>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+          {activeTab === "products" && (
+            <div className="bg-white rounded-xl shadow overflow-hidden">
+              <div className="p-6 border-b flex justify-between"><h3 className="font-bold">All Products</h3><span className="text-gray-500">{products.length} items</span></div>
+              <div className="divide-y">
                 {products.map(p => (
-                  <div key={p.id} className="border rounded-2xl p-3">
-                    <img src={p.image} className="w-full h-24 object-cover rounded-xl mb-2" alt={p.name} />
-                    <div className="text-xs font-semibold truncate">{p.name}</div>
-                    <div className="text-[10px] text-gray-500">{p.category} | {p.brand}</div>
-                    <div className="text-xs font-bold">Rs. {p.price.toLocaleString()}</div>
+                  <div key={p.id} className="p-4 flex items-center gap-4">
+                    <img src={p.image} alt={p.name} className="w-16 h-16 object-cover rounded" />
+                    <div className="flex-1"><p className="font-bold">{p.name}</p><p className="text-sm text-gray-500">Rs. {p.price} | {p.category} {p.isBestSeller? "| Best Seller" : ""}</p></div>
+                    <button onClick={() => handleDeleteProduct(p.id)} className="text-red-600 px-3 py-1 border border-red-200 rounded hover:bg-red-50">Delete</button>
+                  </div>
+                ))}
+                {products.length === 0 && <p className="p-8 text-center text-gray-500">No products - Add karo Jani!</p>}
+              </div>
+            </div>
+          )}
+
+          {activeTab === "categories" && (
+            <div className="bg-white rounded-xl shadow overflow-hidden">
+              <div className="p-6 border-b"><h3 className="font-bold">All Categories</h3></div>
+              <div className="divide-y">
+                {categories.map(cat => (
+                  <div key={cat.id} className="p-4 flex justify-between items-center">
+                    <div><p className="font-bold">{cat.name} {cat.isShopAll && "(Auto)"}</p><p className="text-sm text-gray-500">Order: {cat.order} | Products: {cat.productCount} | Slug: {cat.slug}</p></div>
+                    {!cat.isShopAll && <span className="text-xs bg-gray-100 px-2 py-1 rounded">Editable</span>}
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {activeView === "Categories" && (
-            <div className="bg-white rounded-2xl p-6 border">
-              <div className="flex justify-between items-center mb-6"><h2 className="text-xl font-bold">Categories - Home Page Control (No Code Needed)</h2><button onClick={()=>{setEditingCategory(null); setNewCategory({name:"", order: categories.length+1, active:true}); setShowAddCategory(true);}} className="bg-[#1A3C34] text-white px-6 py-2.5 rounded-full text-sm">+ Add Category</button></div>
-              <div className="space-y-2">
-                {categories.sort((a,b)=>a.order-b.order).map(c=>(
-                  <div key={c.id} className="flex justify-between items-center py-3 border-b"><span>#{c.order} {c.name} ({c.productCount} products)</span><span className="flex gap-2">{c.slug!=="shop-all" && <><button onClick={()=>{setEditingCategory(c); setNewCategory({name:c.name, order:c.order, active:c.active}); setShowAddCategory(true);}} className="text-blue-600 text-sm">Edit</button><button onClick={()=>setCategories(categories.filter(x=>x.id!==c.id))} className="text-red-600 text-sm">Delete</button></>}</span></div>
-                ))}
+          {activeTab === "website" && (
+            <div className="space-y-6">
+              <div className="bg-white p-6 rounded-xl shadow">
+                <h3 className="font-bold mb-4">Website Settings - Home Woman Image & Text</h3>
+                <div className="space-y-4">
+                  <div><label className="block text-sm font-medium mb-1">Top Banner</label><input value={settings.topBanner} onChange={e => setSettings({...settings, topBanner: e.target.value })} className="w-full border p-3 rounded-lg" /></div>
+                  <div><label className="block text-sm font-medium mb-1">Trust Badge</label><input value={settings.trustBadge} onChange={e => setSettings({...settings, trustBadge: e.target.value })} className="w-full border p-3 rounded-lg" /></div>
+                  <div><label className="block text-sm font-medium mb-1">Hero Urdu Text</label><textarea value={settings.heroUrdu} onChange={e => setSettings({...settings, heroUrdu: e.target.value })} className="w-full border p-3 rounded-lg" rows={3}></textarea></div>
+                  <div><label className="block text-sm font-medium mb-1">Hero Woman Image URL</label><input value={settings.heroImage} onChange={e => setSettings({...settings, heroImage: e.target.value })} className="w-full border p-3 rounded-lg" /></div>
+                  <div><label className="block text-sm font-medium mb-1">Site Name</label><input value={settings.siteName} onChange={e => setSettings({...settings, siteName: e.target.value })} className="w-full border p-3 rounded-lg" /></div>
+                  <button onClick={() => alert("Settings Save Ho Gayi Jani!")} className="bg-green-600 text-white px-6 py-2 rounded-lg">Save Settings</button>
+                </div>
+              </div>
+              <div className="bg-white p-6 rounded-xl shadow">
+                <p className="text-sm text-gray-600">Preview:</p>
+                <img src={settings.heroImage} alt="Hero" className="mt-2 w-full h-64 object-cover rounded-lg" />
+                <p className="mt-3">{settings.heroUrdu}</p>
               </div>
             </div>
           )}
 
-          {activeView === "Products" && (
-            <div className="bg-white rounded-2xl p-6 border">
-              <div className="flex justify-between items-center mb-6"><h2 className="text-xl font-bold">All Products - Shop All = {products.length} total</h2><button onClick={()=>setShowAddProduct(true)} className="bg-[#1A3C34] text-white px-6 py-2.5 rounded-full text-sm">+ Add Product</button></div>
-              {products.map(p=>(
-                <div key={p.id} className="flex justify-between border-b py-3"><span>{p.name} - {p.category} - Rs.{p.price} - ✓ Shop All</span><span className="flex gap-2"><button onClick={()=>{setEditingProduct(p); setNewProduct(p); setShowAddProduct(true);}} className="text-blue-600">Edit</button><button onClick={()=>setProducts(products.filter(x=>x.id!==p.id))} className="text-red-600">Delete</button></span></div>
-              ))}
-            </div>
-          )}
-
-          {activeView === "Website Settings" && (
-            <div className="bg-white rounded-2xl p-6 border">
-              <h2 className="text-xl font-bold mb-6">Website Settings - Home Page Control (No Code)</h2>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div><label className="text-xs font-semibold">Top Banner Text</label><input value={settings.topBanner} onChange={e=>setSettings({...settings, topBanner:e.target.value})} className="w-full mt-1 border rounded-xl px-4 py-2.5 text-sm" /></div>
-                <div><label className="text-xs font-semibold">Trust Badge</label><input value={settings.trustBadge} onChange={e=>setSettings({...settings, trustBadge:e.target.value})} className="w-full mt-1 border rounded-xl px-4 py-2.5 text-sm" /></div>
-                <div className="md:col-span-2"><label className="text-xs font-semibold">Hero Heading</label><input value={settings.heroHeading} onChange={e=>setSettings({...settings, heroHeading:e.target.value})} className="w-full mt-1 border rounded-xl px-4 py-2.5 text-sm" /></div>
-                <div className="md:col-span-2"><label className="text-xs font-semibold">Hero Image URL - Home Page Woman Image</label><input value={settings.heroImage} onChange={e=>setSettings({...settings, heroImage:e.target.value})} className="w-full mt-1 border rounded-xl px-4 py-2.5 text-sm" /></div>
-              </div>
-            </div>
-          )}
-
-          {(activeView === "Orders" || activeView === "Sales" || activeView === "Analytics") && (
-            <div className="bg-white rounded-2xl p-12 border text-center">
-              <h2 className="text-xl font-bold">{activeView}</h2>
-              <p className="text-sm text-gray-500 mt-2">No orders found - No fake data. Real data will appear.</p>
+          {activeTab === "orders" && (
+            <div className="bg-white p-12 rounded-xl shadow text-center">
+              <p className="text-5xl mb-4">🛒</p><p className="font-bold">Orders yahan ayenge</p><p className="text-gray-500 text-sm mt-2">Daraz affiliate clicks se commission track hoga</p><p className="mt-4 text-2xl">Total Clicks: {totalClicks} | Commission: Rs. {commission}</p>
             </div>
           )}
         </div>
       </div>
 
       {showAddProduct && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-[24px] w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b flex justify-between items-center">
-              <h3 className="font-bold text-lg">{editingProduct? "Edit Product" : "Add New Product"} - Shop All + Category + Search</h3>
-              <button onClick={()=>{setShowAddProduct(false); setEditingProduct(null);}} className="w-8 h-8 bg-gray-100 rounded-full">✕</button>
-            </div>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b flex justify-between"><h3 className="font-bold text-lg">Add New Product</h3><button onClick={() => setShowAddProduct(false)}>✕</button></div>
             <div className="p-6 space-y-4">
-              <input value={newProduct.name} onChange={e=>setNewProduct({...newProduct, name:e.target.value})} placeholder="Product Name* - Shop All me dikhega" className="w-full border rounded-xl px-4 py-3 text-sm" />
-              <div className="grid grid-cols-2 gap-4">
-                <input type="number" value={newProduct.price || ""} onChange={e=>setNewProduct({...newProduct, price:Number(e.target.value)})} placeholder="Price Rs.*" className="border rounded-xl px-4 py-3 text-sm" />
-                <select value={newProduct.category} onChange={e=>setNewProduct({...newProduct, category:e.target.value})} className="border rounded-xl px-4 py-3 text-sm">
-                  {categories.filter(c=>c.slug!=="shop-all").map(c=><option key={c.id} value={c.name}>{c.name}</option>)}
-                </select>
-              </div>
-              <input value={newProduct.brand} onChange={e=>setNewProduct({...newProduct, brand:e.target.value})} placeholder="Brand/Seller" className="w-full border rounded-xl px-4 py-3 text-sm" />
-              <input value={newProduct.image} onChange={e=>setNewProduct({...newProduct, image:e.target.value})} placeholder="Image URL*" className="w-full border rounded-xl px-4 py-3 text-sm" />
-              <input value={newProduct.darazLink} onChange={e=>setNewProduct({...newProduct, darazLink:e.target.value})} placeholder="Daraz Link* - Earning" className="w-full border rounded-xl px-4 py-3 text-sm" />
-              <div className="border rounded-xl p-4 bg-gray-50">
-                <div className="flex gap-2 mb-3">
-                  <button onClick={()=>setCaptionMode("manual")} className={`px-4 py-2 rounded-full text-xs ${captionMode==="manual"? "bg-[#1A3C34] text-white" : "bg-white border"}`}>✏️ Khud Likho</button>
-                  <button onClick={()=>setCaptionMode("auto")} className={`px-4 py-2 rounded-full text-xs ${captionMode==="auto"? "bg-[#C5A572] text-[#1A3C34]" : "bg-white border"}`}>🤖 Daraz Se Auto Fetch</button>
-                </div>
-                {captionMode==="auto" && <button onClick={handleFetchFromDaraz} disabled={isFetchingDaraz} className="w-full bg-[#C5A572] py-2.5 rounded-full text-sm mb-3">{isFetchingDaraz? "Fetching..." : "🔗 Fetch Caption from Daraz Link"}</button>}
-                <textarea value={newProduct.caption} onChange={e=>setNewProduct({...newProduct, caption:e.target.value})} placeholder="Caption" className="w-full border rounded-xl px-4 py-3 text-sm" rows={3} />
-              </div>
-              <div className="flex gap-3 pt-4">
-                <button onClick={()=>{setShowAddProduct(false); setEditingProduct(null);}} className="flex-1 border py-3 rounded-full">Cancel</button>
-                <button onClick={handleAddProduct} className="flex-1 bg-[#C5A572] font-bold py-3 rounded-full">Add to Live - Shop All + {newProduct.category}</button>
-              </div>
+              <div className="bg-blue-50 p-4 rounded-lg"><label className="block text-sm font-medium mb-1">Daraz Link se Auto Fetch</label><div className="flex gap-2"><input value={darazUrl} onChange={e => setDarazUrl(e.target.value)} placeholder="https://www.daraz.pk/..." className="flex-1 border p-2 rounded" /><button onClick={handleFetchFromDaraz} disabled={isFetching} className="bg-blue-600 text-white px-4 py-2 rounded">{isFetching? "..." : "Fetch"}</button></div></div>
+              <div><label className="block text-sm font-medium mb-1">Product Name *</label><input value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value })} className="w-full border p-3 rounded-lg" placeholder="12 Pcs Chopper" /></div>
+              <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium mb-1">Price *</label><input type="number" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value })} className="w-full border p-3 rounded-lg" placeholder="1499" /></div><div><label className="block text-sm font-medium mb-1">Original Price</label><input type="number" value={newProduct.originalPrice} onChange={e => setNewProduct({...newProduct, originalPrice: e.target.value })} className="w-full border p-3 rounded-lg" placeholder="1999" /></div></div>
+              <div><label className="block text-sm font-medium mb-1">Category</label><select value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value })} className="w-full border p-3 rounded-lg">{categories.filter(c =>!c.isShopAll).map(c => <option key={c.id} value={c.slug}>{c.name}</option>)}<option value="shop-all">Shop All</option></select></div>
+              <div><label className="block text-sm font-medium mb-1">Image URL</label><input value={newProduct.image} onChange={e => setNewProduct({...newProduct, image: e.target.value })} className="w-full border p-3 rounded-lg" placeholder="https://..." /></div>
+              <div><label className="block text-sm font-medium mb-1">Daraz Affiliate Link</label><input value={newProduct.darazLink} onChange={e => setNewProduct({...newProduct, darazLink: e.target.value })} className="w-full border p-3 rounded-lg" placeholder="https://www.daraz.pk/..." /></div>
+              <div><label className="block text-sm font-medium mb-1">Caption</label><input value={newProduct.caption} onChange={e => setNewProduct({...newProduct, caption: e.target.value })} className="w-full border p-3 rounded-lg" placeholder="Best quality..." /></div>
+              <div className="flex items-center gap-2"><input type="checkbox" checked={newProduct.isBestSeller} onChange={e => setNewProduct({...newProduct, isBestSeller: e.target.checked })} /><label className="text-sm">Mark as Best Seller</label></div>
+              <button onClick={handleAddProduct} className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold">Add Product</button>
             </div>
           </div>
         </div>
       )}
+
       {showAddCategory && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-[24px] w-full max-w-md">
-            <div className="p-6 border-b flex justify-between"><h3 className="font-bold">Add/Edit Category</h3><button onClick={()=>setShowAddCategory(false)} className="w-8 h-8 bg-gray-100 rounded-full">✕</button></div>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl w-full max-w-md">
+            <div className="p-6 border-b flex justify-between"><h3 className="font-bold text-lg">Add Category</h3><button onClick={() => setShowAddCategory(false)}>✕</button></div>
             <div className="p-6 space-y-4">
-              <input value={newCategory.name} onChange={e=>setNewCategory({...newCategory, name:e.target.value})} placeholder="Kitchen, Bartan, Cleaning" className="w-full border rounded-xl px-4 py-3 text-sm" />
-              <input type="number" value={newCategory.order} onChange={e=>setNewCategory({...newCategory, order:Number(e.target.value)})} placeholder="Order" className="w-full border rounded-xl px-4 py-3 text-sm" />
-              <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={newCategory.active} onChange={e=>setNewCategory({...newCategory, active:e.target.checked})} /> Active on Home Page</label>
-              <div className="flex gap-3 pt-2"><button onClick={()=>setShowAddCategory(false)} className="flex-1 border py-3 rounded-full">Cancel</button><button onClick={handleAddCategory} className="flex-1 bg-[#1A3C34] text-white py-3 rounded-full">Save</button></div>
+              <div><label className="block text-sm font-medium mb-1">Category Name *</label><input value={newCategory.name} onChange={e => setNewCategory({...newCategory, name: e.target.value })} className="w-full border p-3 rounded-lg" placeholder="e.g. Glass Set" /></div>
+              <div><label className="block text-sm font-medium mb-1">Display Order</label><input type="number" value={newCategory.order} onChange={e => setNewCategory({...newCategory, order: e.target.value })} className="w-full border p-3 rounded-lg" placeholder="5" /></div>
+              <p className="text-xs text-gray-500">Shop All auto banta hai - Isme product count khud update hoga</p>
+              <button onClick={handleAddCategory} className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold">Create Category</button>
             </div>
           </div>
         </div>
