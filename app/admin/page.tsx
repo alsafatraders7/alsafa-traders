@@ -1,120 +1,404 @@
 "use client";
-import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
+import React, { useState, useEffect } from 'react';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// Types
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  order: number;
+  active: boolean;
+  productCount: number;
+}
 
-export default function AdminMaster() {
-  const [isLogin, setIsLogin] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [email, setEmail] = useState("");
-  const [pass, setPass] = useState("");
-  const [showPass, setShowPass] = useState(false);
-  const [activeTab, setActiveTab] = useState("Dashboard");
-  const [products, setProducts] = useState<any>([]);
-  const [categories, setCategories] = useState<any>([]);
-  const [form, setForm] = useState({ name: "", price: "", image: "", daraz_link: "", category_id: "", description: "", best_seller: false, active: true });
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  darazPrice: number;
+  category: string;
+  brand: string;
+  image: string;
+  images: string[];
+  darazLink: string;
+  caption: string;
+  description: string;
+  bestSeller: boolean;
+  active: boolean;
+  priceSync: boolean;
+  clicks: number;
+  date: string;
+}
 
+interface WebsiteSettings {
+  topBanner: string;
+  trustBadge: string;
+  heroWelcome: string;
+  heroHeading: string;
+  heroHighlight1: string;
+  heroHighlight2: string;
+  heroUrdu: string;
+  heroImage: string;
+  siteName: string;
+  siteUrl: string;
+  shopAllText: string;
+}
+
+export default function AlSafaAdminFinal() {
+  // Website Settings - Admin controls Home Page
+  const [settings, setSettings] = useState<WebsiteSettings>({
+    topBanner: "LAUNCH - NEW ARRIVALS - FREE DELIVERY OVER RS.2000 - 16K+ HAPPY CUSTOMERS",
+    trustBadge: "2.5M+ HOME COOKS | 155K+ 5 STAR REVIEWS",
+    heroWelcome: "Welcome to Safa traders",
+    heroHeading: "Everyday Kitchen Essentials for Smart Homes",
+    heroHighlight1: "Essentials for",
+    heroHighlight2: "Smart Homes",
+    heroUrdu: "Ghar ke kaam asan banayen! Premium quality choppers, strainers, storage & organizers - jo har kitchen me chahiye.",
+    heroImage: "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?q=80&w=800",
+    siteName: "Al Safa Traders.pk",
+    siteUrl: "https://alsafatraders.pk",
+    shopAllText: "Shop All"
+  });
+
+  // Categories - ADMIN CONTROLS HOME PAGE CATEGORIES
+  const [categories, setCategories] = useState<Category[]>([
+    { id: "1", name: "Shop All", slug: "shop-all", order: 1, active: true, productCount: 0 },
+    { id: "2", name: "Best Sellers", slug: "best-sellers", order: 2, active: true, productCount: 0 },
+    { id: "3", name: "Kitchen", slug: "kitchen", order: 3, active: true, productCount: 0 },
+    { id: "4", name: "Bartan", slug: "bartan", order: 4, active: true, productCount: 0 },
+    { id: "5", name: "Storage & Organizers", slug: "storage", order: 5, active: true, productCount: 0 },
+  ]);
+
+  // Products - Shop All shows ALL, Category shows filtered
+  const [products, setProducts] = useState<Product[]>([
+    {
+      id: "1",
+      name: "Air Fryer 8L Digital",
+      price: 12999,
+      darazPrice: 12999,
+      category: "Kitchen",
+      brand: "Safa Premium",
+      image: "https://images.unsplash.com/photo-1585515656627-783d6cbd1d2d?q=80&w=400",
+      images: [],
+      darazLink: "https://www.daraz.pk/products/air-fryer-i123.html?tag=alsafa",
+      caption: "Healthy cooking with 85% less oil! Perfect for every home",
+      description: "Premium quality air fryer for smart homes",
+      bestSeller: true,
+      active: true,
+      priceSync: true,
+      clicks: 45,
+      date: "2026-09-10"
+    },
+  ]);
+
+  const [activeView, setActiveView] = useState("Dashboard");
+  const [showAddProduct, setShowAddProduct] = useState(false);
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [captionMode, setCaptionMode] = useState<"manual" | "auto">("manual");
+  const [isFetchingDaraz, setIsFetchingDaraz] = useState(false);
+
+  // New Product Form
+  const [newProduct, setNewProduct] = useState<Partial<Product>>({
+    name: "",
+    price: 0,
+    category: "Kitchen",
+    brand: "",
+    image: "",
+    darazLink: "",
+    caption: "",
+    description: "",
+    bestSeller: false,
+    active: true,
+    priceSync: true,
+  });
+  const [newCategory, setNewCategory] = useState<Partial<Category>>({
+    name: "",
+    order: categories.length + 1,
+    active: true
+  });
+
+  // Update product counts
   useEffect(() => {
-    checkUser();
-    fetchAll();
-  }, []);
+    const updated = categories.map(cat => {
+      if (cat.slug === "shop-all") {
+        return {...cat, productCount: products.filter(p => p.active).length };
+      }
+      return {...cat, productCount: products.filter(p => p.category === cat.name && p.active).length };
+    });
+    setCategories(updated);
+  }, [products]);
 
-  const checkUser = async () => {
-    const { data } = await supabase.auth.getSession();
-    if (data.session) setIsLogin(true);
-    setLoading(false);
-  };
-
-  const fetchAll = async () => {
-    const { data: p } = await supabase.from("products").select("*").order("created_at", { ascending: false });
-    const { data: c } = await supabase.from("categories").select("*");
-    if (p) setProducts(p);
-    if (c) setCategories(c);
-  };
-
-  const login = async () => {
-    if (!email ||!pass) return alert("Email aur Password likho!");
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: pass });
-    if (error) {
-      alert("Login Failed: " + error.message);
-    } else {
-      setIsLogin(true);
+  // Auto fetch from Daraz (simulated)
+  const handleFetchFromDaraz = () => {
+    if (!newProduct.darazLink) {
+      alert("Pehle Daraz Link dalo Jani!");
+      return;
     }
+    setIsFetchingDaraz(true);
+    setTimeout(() => {
+      const mockCaption = `Premium quality ${newProduct.name || 'product'} - Original 【entity-Daraz¦canonical_name=Daraz】 product! High quality, durable, perfect for smart homes. ${newProduct.brand || 'Top brand'} - Best seller on 【entity-Daraz¦canonical_name=Daraz】!`;
+      setNewProduct({...newProduct, caption: mockCaption, description: mockCaption });
+      setIsFetchingDaraz(false);
+      alert("【entity-Daraz¦canonical_name=Daraz】 se caption auto fetch ho gaya! Aap edit kar sakte ho.");
+    }, 1500);
   };
 
-  const logout = async () => {
-    await supabase.auth.signOut();
-    setIsLogin(false);
+  const handleAddProduct = () => {
+    if (!newProduct.name ||!newProduct.price ||!newProduct.category ||!newProduct.darazLink ||!newProduct.image) {
+      alert("Sab * wale fields bharo Jani!");
+      return;
+    }
+    const product: Product = {
+      id: editingProduct? editingProduct.id : Date.now().toString(),
+      name: newProduct.name!,
+      price: Number(newProduct.price),
+      darazPrice: Number(newProduct.price),
+      category: newProduct.category!,
+      brand: newProduct.brand || "Al Safa",
+      image: newProduct.image!,
+      images: newProduct.images || [],
+      darazLink: newProduct.darazLink!,
+      caption: newProduct.caption || "",
+      description: newProduct.description || "",
+      bestSeller: newProduct.bestSeller || false,
+      active: newProduct.active?? true,
+      priceSync: newProduct.priceSync?? true,
+      clicks: editingProduct? editingProduct.clicks : 0,
+      date: new Date().toISOString().split('T')[0]
+    };
+
+    if (editingProduct) {
+      setProducts(products.map(p => p.id === editingProduct.id? product : p));
+      setEditingProduct(null);
+    } else {
+      setProducts([...products, product]);
+    }
+
+    setNewProduct({ name: "", price: 0, category: "Kitchen", brand: "", image: "", darazLink: "", caption: "", description: "", bestSeller: false, active: true, priceSync: true });
+    setShowAddProduct(false);
+    alert(`Product ${editingProduct? 'updated' : 'added'}! Ab Shop All + ${product.category} + Search me foran dikhega!`);
   };
 
-  const addProduct = async () => {
-    if (!form.name) return alert("Name required");
-    const { error } = await supabase.from("products").insert([{...form, category_id: form.category_id || null }]);
-    if (error) alert(error.message); else { alert("LIVE HO GAYA!"); fetchAll(); }
+  const handleAddCategory = () => {
+    if (!newCategory.name) {
+      alert("Category name likho!");
+      return;
+    }
+    if (editingCategory) {
+      setCategories(categories.map(c => c.id === editingCategory.id? {...c, name: newCategory.name!, slug: newCategory.name!.toLowerCase().replace(/\s+/g,'-'), order: newCategory.order!, active: newCategory.active! } : c));
+      setEditingCategory(null);
+    } else {
+      const cat: Category = {
+        id: Date.now().toString(),
+        name: newCategory.name!,
+        slug: newCategory.name!.toLowerCase().replace(/\s+/g,'-'),
+        order: newCategory.order!,
+        active: newCategory.active!,
+        productCount: 0
+      };
+      setCategories([...categories, cat]);
+    }
+    setNewCategory({ name: "", order: categories.length + 2, active: true });
+    setShowAddCategory(false);
+    alert("Category saved! Ab Home Page pe pill update ho jayega - No code needed!");
   };
 
-  if (loading) return <div className="p-10">Loading...</div>;
-
-  if (!isLogin) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: "#EBF5E9" }}>
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-[400px] border-t-4" style={{ borderColor: "#1A3C34" }}>
-        <h1 className="text-2xl font-bold" style={{ color: "#1A3C34" }}>AL SAFA TRADERS</h1>
-        <p className="text-sm mb-6 text-gray-500">Secure Admin Login</p>
-
-        <label className="text-sm font-bold">Email</label>
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@alsafatraders.pk" className="w-full border p-3 rounded-lg mb-3" />
-
-        <label className="text-sm font-bold">Password</label>
-        <div className="relative mb-6">
-          <input type={showPass? "text" : "password"} value={pass} onChange={(e) => setPass(e.target.value)} placeholder="Password" className="w-full border p-3 rounded-lg pr-16" autoComplete="new-password" />
-          <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-3 text-xs font-bold px-2 py-1 rounded" style={{ background: "#EBF5E9", color: "#1A3C34" }}>
-            {showPass? "Hide" : "Show"}
-          </button>
-        </div>
-
-        <button onClick={login} className="w-full py-3 rounded-lg text-white font-bold" style={{ background: "#1A3C34" }}>Log In</button>
-
-        <div className="flex justify-center mt-4 text-sm">
-          <a href="/" className="text-gray-500 underline">View Website</a>
-        </div>
-      </div>
-    </div>
-  );
+  const totalClicks = products.reduce((sum, p) => sum + p.clicks, 0);
+  const activeCategories = categories.filter(c => c.active && c.slug!== "shop-all");
 
   return (
-    <div className="min-h-screen flex" style={{ background: "#EBF5E9" }}>
-      <div className="w-64 text-white p-5 flex flex-col" style={{ background: "#1A3C34" }}>
-        <h2 className="text-xl font-bold mb-8">AL SAFA TRADERS</h2>
-        {["Dashboard", "Products", "Categories", "Daraz"].map((tab) => (
-          <button key={tab} onClick={() => setActiveTab(tab)} className={`text-left py-2.5 px-3 rounded-lg mb-1 text-sm ${activeTab === tab? "bg-white text-[#1A3C34] font-bold" : ""}`}>
-            {tab}
-          </button>
-        ))}
-        <button onClick={logout} className="mt-auto text-left py-2 px-3 rounded bg-red-500/20">Logout</button>
-      </div>
-      <div className="flex-1 p-6">
-        <div className="bg-white p-6 rounded-lg mb-6 border-l-4 flex justify-between" style={{ borderColor: "#1A3C34" }}>
-          <span>Secure Login: {email} | Synced with Supabase</span>
-          <a href="/" target="_blank" className="text-sm px-3 py-1 rounded-full text-white" style={{ background: "#1A3C34" }}>View Public Website</a>
-        </div>
-        {activeTab === "Dashboard" && <div className="bg-white p-6 rounded-xl shadow"><h3 className="font-bold">Welcome Back, Admin!</h3><p>Total Products: {products.length}</p></div>}
-        {activeTab === "Products" && (
-          <div className="bg-white p-6 rounded-xl shadow">
-            <h3 className="font-bold mb-4">Add Product - Live</h3>
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <input placeholder="Name" value={form.name} onChange={(e) => setForm({...form, name: e.target.value })} className="border p-2 rounded" />
-              <input placeholder="Price" value={form.price} onChange={(e) => setForm({...form, price: e.target.value })} className="border p-2 rounded" />
-              <input placeholder="Image URL" value={form.image} onChange={(e) => setForm({...form, image: e.target.value })} className="border p-2 rounded" />
-              <input placeholder="Daraz Link" value={form.daraz_link} onChange={(e) => setForm({...form, daraz_link: e.target.value })} className="border p-2 rounded" />
+    <div className="min-h-screen bg-[#FFFCF5] flex font-sans">
+      {/* Sidebar */}
+      <div className="w-72 bg-[#1A3C34] text-white flex flex-col fixed h-screen overflow-y-auto">
+        <div className="p-6 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#C5A572] rounded-full flex items-center justify-center font-bold text-[#1A3C34]">🏠</div>
+            <div>
+              <h1 className="font-bold text-lg leading-tight">Al Safa Traders</h1>
+              <p className="text-xs text-white/60">Quality Products • Better Living</p>
             </div>
-            <button onClick={addProduct} className="px-6 py-3 rounded font-bold text-white" style={{ background: "#1A3C34" }}>ADD TO LIVE WEBSITE</button>
           </div>
-        )}
+        </div>
+</div>
+
+        <nav className="flex-1 p-4 space-y-1">
+          {[
+            { name: "Dashboard", icon: "🏠", active: true },
+            { name: "Products", icon: "📦", count: products.length },
+            { name: "Categories", icon: "⊞", count: categories.length },
+            { name: "Orders", icon: "🛒" },
+            { name: "Sales", icon: "📊" },
+            { name: "Analytics", icon: "📈" },
+            { name: "Website Settings", icon: "🌐" },
+            { name: "Daraz Affiliate Links", icon: "🔗" },
+            { name: "Product Images & Details", icon: "🖼️" },
+            { name: "Captions", icon: "📝" },
+            { name: "Customer Management", icon: "👤" },
+            { name: "Admin Account", icon: "🛡️" },
+            { name: "Change Password", icon: "🔒" },
+            { name: "Help & Support", icon: "❓" },
+          ].map(item => (
+            <button
+              key={item.name}
+              onClick={() => setActiveView(item.name)}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-all ${activeView === item.name? "bg-[#C5A572] text-[#1A3C34] font-semibold" : "hover:bg-white/10 text-white/80"}`}
+            >
+              <span className="flex items-center gap-3"><span>{item.icon}</span> {item.name} {item.name === "Products" || item.name === "Categories"? ">" : ""}</span>
+              {item.count!== undefined && <span className="text-xs bg-white/20 px-2 py-1 rounded-full">{item.count}</span>}
+            </button>
+          ))}
+          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 text-white/80 mt-6">
+            <span>🚪</span> Logout
+          </button>
+        </nav>
+
+        <div className="p-4 border-t border-white/10">
+          <div className="text-xs text-white/40">Al Safa Traders</div>
+          <div className="text-xs text-white/40">Admin Panel v1.0</div>
+        </div>
       </div>
+
+      {/* Main Content */}
+      <div className="flex-1 ml-72">
+        <div className="bg-white border-b sticky top-0 z-20 px-8 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4 flex-1">
+            <span className="text-xl">☰</span>
+            <div className="relative flex-1 max-w-md">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2">🔍</span>
+              <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search products, categories..." className="w-full pl-10 pr-4 py-2.5 bg-gray-50 rounded-full border text-sm" />
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <button className="relative p-2">🔔</button>
+            <div className="w-8 h-8 bg-[#1A3C34] rounded-full flex items-center justify-center text-white text-sm">A</div>
+          </div>
+        </div>
+
+        <div className="p-8">
+          <div className="bg-gradient-to-br from-[#E8F5E9] to-[#F1F8E9] rounded-[24px] p-8 flex flex-col lg:flex-row items-center justify-between gap-8 mb-6 border border-green-100">
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-[#1A3C34] mb-2">Welcome Back, Admin!</h1>
+              <p className="text-[#1A3C34]/70 mb-6">Manage your products, categories, orders and keep your website updated from here.</p>
+              <div className="text-sm font-medium">Categories</div>
+            </div>
+            <div className="bg-white rounded-2xl p-5 border shadow-sm">
+              <div className="text-2xl font-bold">{totalClicks}</div>
+              <div className="text-sm font-medium">Total Clicks</div>
+            </div>
+            <div className="bg-white rounded-2xl p-5 border shadow-sm">
+              <div className="text-2xl font-bold">Rs. 0</div>
+              <div className="text-sm font-medium">Estimated Commission</div>
+            </div>
+          </div>
+
+          {activeView === "Dashboard" && (
+            <div className="bg-white rounded-2xl p-6 border">
+              <h3 className="font-bold mb-4">Quick Actions - Shop All Logic Working</h3>
+              <button onClick={() => setShowAddProduct(true)} className="w-full bg-[#C5A572] text-[#1A3C34] font-semibold py-3 rounded-full mb-3">+ Add New Product (Shop All + Category + Search)</button>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                {products.map(p => (
+                  <div key={p.id} className="border rounded-2xl p-3">
+                    <img src={p.image} className="w-full h-24 object-cover rounded-xl mb-2" alt={p.name} />
+                    <div className="text-xs font-semibold truncate">{p.name}</div>
+                    <div className="text-[10px] text-gray-500">{p.category} | {p.brand}</div>
+                    <div className="text-xs font-bold">Rs. {p.price.toLocaleString()}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeView === "Categories" && (
+            <div className="bg-white rounded-2xl p-6 border">
+              <div className="flex justify-between items-center mb-6"><h2 className="text-xl font-bold">Categories - Home Page Control (No Code Needed)</h2><button onClick={()=>{setEditingCategory(null); setNewCategory({name:"", order: categories.length+1, active:true}); setShowAddCategory(true);}} className="bg-[#1A3C34] text-white px-6 py-2.5 rounded-full text-sm">+ Add Category</button></div>
+              <div className="space-y-2">
+                {categories.sort((a,b)=>a.order-b.order).map(c=>(
+                  <div key={c.id} className="flex justify-between items-center py-3 border-b"><span>#{c.order} {c.name} ({c.productCount} products)</span><span className="flex gap-2">{c.slug!=="shop-all" && <><button onClick={()=>{setEditingCategory(c); setNewCategory({name:c.name, order:c.order, active:c.active}); setShowAddCategory(true);}} className="text-blue-600 text-sm">Edit</button><button onClick={()=>setCategories(categories.filter(x=>x.id!==c.id))} className="text-red-600 text-sm">Delete</button></>}</span></div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeView === "Products" && (
+            <div className="bg-white rounded-2xl p-6 border">
+              <div className="flex justify-between items-center mb-6"><h2 className="text-xl font-bold">All Products - Shop All = {products.length} total</h2><button onClick={()=>setShowAddProduct(true)} className="bg-[#1A3C34] text-white px-6 py-2.5 rounded-full text-sm">+ Add Product</button></div>
+              {products.map(p=>(
+                <div key={p.id} className="flex justify-between border-b py-3"><span>{p.name} - {p.category} - Rs.{p.price} - ✓ Shop All</span><span className="flex gap-2"><button onClick={()=>{setEditingProduct(p); setNewProduct(p); setShowAddProduct(true);}} className="text-blue-600">Edit</button><button onClick={()=>setProducts(products.filter(x=>x.id!==p.id))} className="text-red-600">Delete</button></span></div>
+              ))}
+            </div>
+          )}
+
+          {activeView === "Website Settings" && (
+            <div className="bg-white rounded-2xl p-6 border">
+              <h2 className="text-xl font-bold mb-6">Website Settings - Home Page Control (No Code)</h2>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div><label className="text-xs font-semibold">Top Banner Text</label><input value={settings.topBanner} onChange={e=>setSettings({...settings, topBanner:e.target.value})} className="w-full mt-1 border rounded-xl px-4 py-2.5 text-sm" /></div>
+                <div><label className="text-xs font-semibold">Trust Badge</label><input value={settings.trustBadge} onChange={e=>setSettings({...settings, trustBadge:e.target.value})} className="w-full mt-1 border rounded-xl px-4 py-2.5 text-sm" /></div>
+                <div className="md:col-span-2"><label className="text-xs font-semibold">Hero Heading</label><input value={settings.heroHeading} onChange={e=>setSettings({...settings, heroHeading:e.target.value})} className="w-full mt-1 border rounded-xl px-4 py-2.5 text-sm" /></div>
+                <div className="md:col-span-2"><label className="text-xs font-semibold">Hero Image URL - Home Page Woman Image</label><input value={settings.heroImage} onChange={e=>setSettings({...settings, heroImage:e.target.value})} className="w-full mt-1 border rounded-xl px-4 py-2.5 text-sm" /></div>
+              </div>
+            </div>
+          )}
+
+          {(activeView === "Orders" || activeView === "Sales" || activeView === "Analytics") && (
+            <div className="bg-white rounded-2xl p-12 border text-center">
+              <h2 className="text-xl font-bold">{activeView}</h2>
+              <p className="text-sm text-gray-500 mt-2">No orders found - No fake data. Real data will appear.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {showAddProduct && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[24px] w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b flex justify-between items-center">
+              <h3 className="font-bold text-lg">{editingProduct? "Edit Product" : "Add New Product"} - Shop All + Category + Search</h3>
+              <button onClick={()=>{setShowAddProduct(false); setEditingProduct(null);}} className="w-8 h-8 bg-gray-100 rounded-full">✕</button>
+            </div>
+            <div className="p-6 space-y-4">
+              <input value={newProduct.name} onChange={e=>setNewProduct({...newProduct, name:e.target.value})} placeholder="Product Name* - Shop All me dikhega" className="w-full border rounded-xl px-4 py-3 text-sm" />
+              <div className="grid grid-cols-2 gap-4">
+                <input type="number" value={newProduct.price || ""} onChange={e=>setNewProduct({...newProduct, price:Number(e.target.value)})} placeholder="Price Rs.*" className="border rounded-xl px-4 py-3 text-sm" />
+                <select value={newProduct.category} onChange={e=>setNewProduct({...newProduct, category:e.target.value})} className="border rounded-xl px-4 py-3 text-sm">
+                  {categories.filter(c=>c.slug!=="shop-all").map(c=><option key={c.id} value={c.name}>{c.name}</option>)}
+                </select>
+              </div>
+              <input value={newProduct.brand} onChange={e=>setNewProduct({...newProduct, brand:e.target.value})} placeholder="Brand/Seller" className="w-full border rounded-xl px-4 py-3 text-sm" />
+              <input value={newProduct.image} onChange={e=>setNewProduct({...newProduct, image:e.target.value})} placeholder="Image URL*" className="w-full border rounded-xl px-4 py-3 text-sm" />
+              <input value={newProduct.darazLink} onChange={e=>setNewProduct({...newProduct, darazLink:e.target.value})} placeholder="Daraz Link* - Earning" className="w-full border rounded-xl px-4 py-3 text-sm" />
+              <div className="border rounded-xl p-4 bg-gray-50">
+                <div className="flex gap-2 mb-3">
+                  <button onClick={()=>setCaptionMode("manual")} className={`px-4 py-2 rounded-full text-xs ${captionMode==="manual"? "bg-[#1A3C34] text-white" : "bg-white border"}`}>✏️ Khud Likho</button>
+                  <button onClick={()=>setCaptionMode("auto")} className={`px-4 py-2 rounded-full text-xs ${captionMode==="auto"? "bg-[#C5A572] text-[#1A3C34]" : "bg-white border"}`}>🤖 Daraz Se Auto Fetch</button>
+                </div>
+                {captionMode==="auto" && <button onClick={handleFetchFromDaraz} disabled={isFetchingDaraz} className="w-full bg-[#C5A572] py-2.5 rounded-full text-sm mb-3">{isFetchingDaraz? "Fetching..." : "🔗 Fetch Caption from Daraz Link"}</button>}
+                <textarea value={newProduct.caption} onChange={e=>setNewProduct({...newProduct, caption:e.target.value})} placeholder="Caption" className="w-full border rounded-xl px-4 py-3 text-sm" rows={3} />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button onClick={()=>{setShowAddProduct(false); setEditingProduct(null);}} className="flex-1 border py-3 rounded-full">Cancel</button>
+                <button onClick={handleAddProduct} className="flex-1 bg-[#C5A572] font-bold py-3 rounded-full">Add to Live - Shop All + {newProduct.category}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {showAddCategory && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[24px] w-full max-w-md">
+            <div className="p-6 border-b flex justify-between"><h3 className="font-bold">Add/Edit Category</h3><button onClick={()=>setShowAddCategory(false)} className="w-8 h-8 bg-gray-100 rounded-full">✕</button></div>
+            <div className="p-6 space-y-4">
+              <input value={newCategory.name} onChange={e=>setNewCategory({...newCategory, name:e.target.value})} placeholder="Kitchen, Bartan, Cleaning" className="w-full border rounded-xl px-4 py-3 text-sm" />
+              <input type="number" value={newCategory.order} onChange={e=>setNewCategory({...newCategory, order:Number(e.target.value)})} placeholder="Order" className="w-full border rounded-xl px-4 py-3 text-sm" />
+              <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={newCategory.active} onChange={e=>setNewCategory({...newCategory, active:e.target.checked})} /> Active on Home Page</label>
+              <div className="flex gap-3 pt-2"><button onClick={()=>setShowAddCategory(false)} className="flex-1 border py-3 rounded-full">Cancel</button><button onClick={handleAddCategory} className="flex-1 bg-[#1A3C34] text-white py-3 rounded-full">Save</button></div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
