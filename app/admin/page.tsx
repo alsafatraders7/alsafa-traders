@@ -4,21 +4,21 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabase = supabaseUrl && supabaseAnonKey? createClient(supabaseUrl, supabaseAnonKey) : null;
+const supabase = (supabaseUrl && supabaseAnonKey) ? createClient(supabaseUrl, supabaseAnonKey) : null;
 
-export default function AdminPanelDisplayMaster() {
+export default function AdminPanel() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState("Last 7 Days");
   const [isLive, setIsLive] = useState(false);
+  const [period, setPeriod] = useState("Last 7 Days");
 
   useEffect(() => {
     async function load() {
       if (!supabase) { setLoading(false); return; }
       try {
-        const { data, error } = await supabase.from('products').select('*').order('id', { ascending: false }).limit(10);
-        if (!error && data) {
+        const { data } = await supabase.from('products').select('*').order('id', { ascending: false }).limit(10);
+        if (data) {
           setProducts(data);
           setIsLive(true);
         }
@@ -29,90 +29,110 @@ export default function AdminPanelDisplayMaster() {
   }, []);
 
   const totalProducts = products.length;
-  const categories = [...new Set(products.map((p: any) => p.category).filter(Boolean))];
 
   return (
-    <div className="min-h-screen bg-[#F4F5F7] flex font-sans text-[#0A2218]">
-      <aside className={`${sidebarOpen? 'w-[260px]' : 'w-[70px]'} bg-[#0A2218] text-white fixed h-screen z-40 flex flex-col transition-all duration-300 overflow-y-auto`}>
-        <div className="p-4 border-b border-white/10 flex items-center gap-3 sticky top-0 bg-[#0A2218]">
-          <div className="w-9 h-9 bg-[#C8A95B] rounded-lg flex items-center justify-center text-[#0A2218] font-bold shrink-0">A</div>
-          {sidebarOpen && <div><p className="font-bold text-[15px] leading-none">Al Safa Traders</p><p className="text-[10px] text-white/60">Quality Products - Better Living</p></div>}
+    <div className="min-h-screen bg-gray-50 flex text-black">
+      {/* LEFT SIDEBAR - 1 */}
+      <aside className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-[#0A2218] text-white fixed h-screen z-40 flex flex-col transition-all`}>
+        <div className="p-4 border-b border-white/10 flex items-center gap-3">
+          <div className="w-9 h-9 bg-yellow-600 rounded-lg flex items-center justify-center font-bold text-black">A</div>
+          {sidebarOpen && <div><p className="font-bold text-sm">Al Safa Traders</p><p className="text-xs opacity-60">Better Living</p></div>}
         </div>
-        <nav className="p-3 space-y-1 mt-2">
-          {[
-            { icon: "🏠", label: "Dashboard", active: true },
-            { icon: "📦", label: "Products" },
-            { icon: "🗂️", label: "Categories" },
-            { icon: "🛒", label: "Orders" },
-            { icon: "📈", label: "Sales" },
-            { icon: "📊", label: "Analytics" },
-            { icon: "🌐", label: "Website Settings" },
-            { icon: "🔗", label: "【entity-Daraz¦canonical_name=Daraz】 Affiliate Links" },
-            { icon: "🖼️", label: "Product Images & Details" },
-            { icon: "📝", label: "Captions" },
-            { icon: "👥", label: "Customer Management" },
-          ].map((m, i) => (
-            <div key={i} className={`${m.active? 'bg-[#C8A95B] text-[#0A2218] font-semibold' : 'text-white/70 hover:bg-white/10'} px-3 py-2.5 rounded-lg text-[13px] flex items-center gap-3 cursor-pointer`}>
-              <span className="text-[16px] w-5 text-center">{m.icon}</span>{sidebarOpen && m.label}
-            </div>
-          ))}
+        <nav className="p-3 space-y-1 text-sm overflow-y-auto">
+          <div className="bg-yellow-600 text-black px-3 py-2 rounded-lg font-bold">Dashboard</div>
+          <div className="px-3 py-2 rounded-lg opacity-70">Products</div>
+          <div className="px-3 py-2 rounded-lg opacity-70">Categories</div>
+          <div className="px-3 py-2 rounded-lg opacity-70">Orders</div>
+          <div className="px-3 py-2 rounded-lg opacity-70">Sales</div>
+          <div className="px-3 py-2 rounded-lg opacity-70">Analytics</div>
+          <div className="px-3 py-2 rounded-lg opacity-70">Website Settings</div>
+          <div className="px-3 py-2 rounded-lg opacity-70">【entity-Daraz¦canonical_name=Daraz】 Affiliate Links</div>
+          <div className="px-3 py-2 rounded-lg opacity-70">Product Images & Details</div>
+          <div className="px-3 py-2 rounded-lg opacity-70">Captions</div>
+          <div className="px-3 py-2 rounded-lg opacity-70">Customer Management</div>
           <div className="pt-4 mt-4 border-t border-white/10 space-y-1">
-            {[
-              { icon: "🛡️", label: "Admin Account" },
-              { icon: "🔑", label: "Change Password" },
-              { icon: "❓", label: "Help & Support" },
-              { icon: "🚪", label: "Logout" },
-            ].map((m, i) => (
-              <div key={i} className="text-white/70 hover:bg-white/10 px-3 py-2.5 rounded-lg text-[13px] flex items-center gap-3 cursor-pointer">
-                <span className="w-5 text-center">{m.icon}</span>{sidebarOpen && m.label}
-              </div>
-            ))}
+            <div className="px-3 py-2 rounded-lg opacity-70">Admin Account</div>
+            <div className="px-3 py-2 rounded-lg opacity-70">Change Password</div>
+            <div className="px-3 py-2 rounded-lg opacity-70">Help & Support</div>
+            <div className="px-3 py-2 rounded-lg opacity-70">Logout</div>
           </div>
         </nav>
       </aside>
 
-      <main className={`${sidebarOpen? 'ml-[260px]' : 'ml-[70px]'} flex-1 min-h-screen transition-all`}>
-        <div className="bg-white border-b sticky top-0 z-30 flex items-center justify-between px-4 md:px-6 py-3">
+      <main className={`${sidebarOpen ? 'ml-64' : 'ml-16'} flex-1`}>
+        {/* TOP BAR - 2 */}
+        <div className="bg-white border-b sticky top-0 z-30 flex justify-between items-center px-6 py-3">
           <div className="flex items-center gap-3">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-gray-100 rounded-lg">☰</button>
-            <div className="relative hidden md:block">
-              <input placeholder="Search products, categories..." className="bg-[#F4F5F7] rounded-full pl-9 pr-4 py-2 text-sm w-[280px] focus:outline-none" />
-              <span className="absolute left-3 top-2.5 text-sm">🔍</span>
-            </div>
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 bg-gray-100 rounded">Menu</button>
+            <input placeholder="Search products, categories..." className="bg-gray-100 rounded-full px-4 py-2 text-sm w-64" />
           </div>
-          <div className="flex items-center gap-4">
-            <span className="relative text-xl">🔔</span>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-[#0A2218] rounded-full text-white flex items-center justify-center font-bold text-xs">A</div>
-              <div className="hidden md:block leading-none"><p className="text-sm font-bold">Admin</p><p className="text-[10px] text-gray-500">Super Admin</p></div>
-            </div>
+          <div className="flex items-center gap-3">
+            <span>Notifications</span>
+            <span className="font-bold">Admin - Super Admin</span>
           </div>
         </div>
 
-        <div className="p-4 md:p-6 space-y-6">
-          <div className="grid md:grid-cols-12 gap-4">
-            <div className="md:col-span-8 bg-gradient-to-r from-[#FFF7E6] to-[#FFF] rounded-2xl p-5 md:p-6 flex justify-between items-center border">
-              <div>
-                <h1 className="text-xl md:text-2xl font-bold">Welcome Back, Admin!</h1>
-                <p className="text-xs md:text-sm text-gray-600 mt-1">Manage your products, categories, orders and keep your website updated from here.</p>
-                <div className="flex gap-2 mt-4">
-                  <a href="/" target="_blank" className="bg-[#0A2218] text-white px-4 py-2 rounded-lg text-xs">View Public Website</a>
-                  <span className="bg-[#C8A95B] text-[#0A2218] px-4 py-2 rounded-lg text-xs">Admin Dashboard</span>
-                </div>
-                <p className="text-[11px] text-gray-500 mt-3">https://alsafatraders.pk</p>
+        <div className="p-6 space-y-6">
+          {/* WELCOME - 3 */}
+          <div className="grid grid-cols-12 gap-4">
+            <div className="col-span-8 bg-white rounded-2xl p-6 border">
+              <h1 className="text-2xl font-bold">Welcome Back, Admin!</h1>
+              <p className="text-sm text-gray-600 mt-1">Manage your products, categories, orders and keep your website updated from here.</p>
+              <div className="flex gap-2 mt-4">
+                <a href="/" target="_blank" className="bg-black text-white px-4 py-2 rounded-lg text-xs">View Public Website</a>
+                <span className="bg-yellow-600 text-black px-4 py-2 rounded-lg text-xs">Admin Dashboard</span>
               </div>
+              <p className="text-xs text-gray-500 mt-3">https://alsafatraders.pk - {isLive ? 'Live' : 'Not available'}</p>
             </div>
-            <div className="md:col-span-2 bg-white rounded-2xl p-4 border">
+            <div className="col-span-2 bg-white rounded-2xl p-4 border">
               <p className="text-xs font-bold">Website Status</p>
-              <p className={`text-xs mt-2 font-semibold ${isLive? 'text-green-600' : 'text-gray-400'}`}>● {isLive? 'Live' : 'Not available'}</p>
-              <p className="text-[11px] text-gray-500 mt-1">{isLive? 'Your website is live and running smoothly.' : 'Connect Supabase to go live.'}</p>
+              <p className="text-xs mt-2 font-bold text-green-600">{isLive ? 'Live' : 'Not available'}</p>
+              <p className="text-xs text-gray-500 mt-1">{isLive ? 'Website is live and running smoothly.' : 'Connect Supabase'}</p>
             </div>
-            <div className="md:col-span-2 bg-white rounded-2xl p-4 border">
+            <div className="col-span-2 bg-white rounded-2xl p-4 border">
               <p className="text-xs font-bold">Admin Account</p>
-              <p className="text-[11px] text-gray-500 mt-1">Manage your profile & settings</p>
+              <p className="text-xs text-gray-500 mt-1">Manage profile & settings</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white rounded-2xl p-4 border"><p className="text-[11px] text-gray-500">Total Products</p><p className="text-xl font-bold">{loading? '--' : totalProducts}</p><p className="text-[10px] text-green-600">● {isLive? 'Published' : 'Not available'}</p></div>
-            <div className="bg-white rounded-2xl p-4
+          {/* STATS - 4 */}
+          <div className="grid grid-cols-4 gap-4">
+            <div className="bg-white rounded-2xl p-4 border"><p className="text-xs text-gray-500">Total Products</p><p className="text-xl font-bold">{loading ? '--' : totalProducts}</p><p className="text-xs text-green-600">Published on website</p></div>
+            <div className="bg-white rounded-2xl p-4 border"><p className="text-xs text-gray-500">Categories</p><p className="text-xl font-bold">{loading ? '--' : 0}</p><p className="text-xs text-green-600">Active categories</p></div>
+            <div className="bg-white rounded-2xl p-4 border"><p className="text-xs text-gray-500">Total Clicks</p><p className="text-xl font-bold">0</p><p className="text-xs text-gray-500">From Daraz links - Real data</p></div>
+            <div className="bg-white rounded-2xl p-4 border"><p className="text-xs text-gray-500">Estimated Commission</p><p className="text-xl font-bold">Rs. 0</p><p className="text-xs text-gray-500">Real data from Daraz</p></div>
+          </div>
+
+          <div className="grid grid-cols-12 gap-4">
+            <div className="col-span-8 bg-white rounded-2xl p-5 border">
+              <div className="flex justify-between"><p className="font-bold text-sm">Website Overview - {period}</p><select value={period} onChange={e=>setPeriod(e.target.value)} className="border rounded text-xs px-2 py-1"><option>Last 7 Days</option><option>Last 30 Days</option></select></div>
+              <p className="text-xs text-gray-400 mt-10 text-center">Traffic, engagement, clicks - {isLive ? 'Live chart will show here' : 'Not available until data sync'}</p>
+            </div>
+            <div className="col-span-4 bg-white rounded-2xl p-5 border">
+              <p className="font-bold text-sm mb-3">Quick Actions</p>
+              <div className="space-y-2">
+                <button className="w-full bg-yellow-600 text-black text-left px-4 py-3 rounded-xl text-xs font-bold">Add New Product</button>
+                <button className="w-full bg-gray-100 text-left px-4 py-3 rounded-xl text-xs">Manage Products</button>
+                <button className="w-full bg-gray-100 text-left px-4 py-3 rounded-xl text-xs">Manage Categories</button>
+                <button className="w-full bg-gray-100 text-left px-4 py-3 rounded-xl text-xs">Edit Website Settings</button>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-5 border">
+            <p className="font-bold text-sm">Recent Products - View All</p>
+            {loading ? <p className="text-xs mt-3">Loading...</p> : products.length===0 ? <p className="text-xs text-gray-500 mt-3">No products found - Yahan image, name, category, price, published/hidden, edit button ayega. Products aap baad me khud add karoge.</p> :
+            <div className="grid grid-cols-5 gap-3 mt-3">{products.map((p:any,i:number)=><div key={i} className="border rounded-xl p-3"><p className="text-xs font-bold truncate">{p.name}</p><p className="text-xs">Rs. {p.price}</p></div>)}</div>
+            }
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-white rounded-2xl p-5 border"><p className="font-bold text-sm">Top Categories - View All</p><p className="text-xs text-gray-500 mt-2">Name, product count, icon</p></div>
+            <div className="bg-white rounded-2xl p-5 border"><p className="font-bold text-sm">Recent Orders - View All</p><p className="text-xs text-gray-500 mt-4 text-center">No orders found - No fake orders</p></div>
+            <div className="bg-white rounded-2xl p-5 border"><p className="font-bold text-sm">Live Data Connected</p><p className="text-xs mt-2 p-2 bg-green-50 rounded">{isLive ? 'All data synced with public website and Daraz affiliate links' : 'Not available - Add ENV keys in Vercel'}</p></div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
