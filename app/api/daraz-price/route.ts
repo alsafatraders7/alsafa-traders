@@ -1,94 +1,69 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { url, auto } = body;
+    const url = body.url;
 
-    // Agar auto bulk sync hai to Supabase se sara kaam hoga
-    if (auto === true) {
-      const supabaseAdmin = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-      );
-      const { data: products } = await supabaseAdmin
-       .from('products')
-       .select('id, affiliate_link')
-       .eq('auto_update', true);
-
-      if (!products) return NextResponse.json({ success: true, updated: 0 });
-
-      let updatedCount = 0;
-      for (const p of products) {
-        try {
-          if (!p.affiliate_link) continue;
-          const res = await fetch(p.affiliate_link, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-            redirect: 'follow' as any,
-          });
-          const html = await res.text();
-          let price = '';
-          const m1 = html.match(/"price"\s*:\s*"?(\d+)"?/i);
-          const m2 = html.match(/Rs\.\s*(\d+)/i);
-          const m3 = html.match(/salePrice.*?(\d+)/i);
-          if (m1) price = m1[1];
-          else if (m2) price = m2[1];
-          else if (m3) price = m3[1];
-
-          if (price) {
-            await supabaseAdmin.from('products').update({
-              price: parseInt(price),
-              last_price_sync: new Date().toISOString()
-            }).eq('id', p.id);
-            updatedCount++;
-          }
-        } catch (e) {}
-      }
-      return NextResponse.json({ success: true, updated: updatedCount });
+    if (!url) {
+      return NextResponse.json({ success: false, error: 'Link nahi hai' });
     }
 
-    // ====== TUMHARA PURANA CODE - Waisa ka waisa - Kuch delete nahi kiya ======
-    if (!url) return NextResponse.json({ success: false, error: 'Link nahi hai' });
-
-    // s.daraz.pk short link ko follow karo - redirect
+    // s.【entity-daraz¦canonical_name=Daraz】.pk ko follow karo
     const res = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'text/html,application/xhtml+xml'
+      },
       redirect: 'follow',
     });
+
     const html = await res.text();
 
-    // Name - Title se
-    const titleMatch = html.match(/<title>(.*?)<\/title>/i);
+    // Title se name
     let name = '';
+    const titleMatch = html.match(/<title>(.*?)<\/title>/i);
     if (titleMatch) {
-      name = titleMatch[1].split('|')[0].trim();
+      name = titleMatch[1].split('|')[0].trim().replace(/Daraz.*$/i, '').trim();
     }
 
-    // Price - Daraz ke 3 tarah ke price
+    // Price ke 5 tareeqe try karo - Rs. 1,439 wala bhi pakdega
     let price = '';
-    const m1 = html.match(/"price"\s*:\s*"?(\d+)"?/i);
-    const m2 = html.match(/Rs\.\s*(\d+)/i);
-    const m3 = html.match(/salePrice.*?(\d+)/i);
-    if (m1) price = m1[1];
-    else if (m2) price = m2[1];
-    else if (m3) price = m3[1];
+    const patterns = [
+      /"price"\s*:\s*"?(\d+)"?/i,
+      /"salePrice".*?(\d{3,6})/i,
+      /Rs\.\s*([\d,]+)/i,
+      /price.*Rs\.\s*([\d,]+)/i,
+      /"amount"\s*:\s*"?(\d+)"?/i
+    ];
+
+    for (let pat of patterns) {
+      const m = html.match(pat);
+      if (m) {
+        price = m[1].replace(/,/g, '');
+        if (parseInt(price) > 50) break; // 50 se kam price nahi hoga
+      }
+    }
 
     // Image
     let image = '';
-    const imgM = html.match(/"image"\s*:\s*"(https:\/\/[^"]+)"/i);
-    if (imgM) image = imgM[1];
+    const imgMatch = html.match(/"image"\s*:\s*"(https:\/\/[^"]+)"/i) ||
+                     html.match(/<meta property="og:image" content="([^"]+)"/i);
+    if (imgMatch) image = imgMatch[1];
 
-    // Aapka cc wala link waisa ka waisa safe - hum change nahi karenge
+    if (!price) {
+      return NextResponse.json({ success: false, error: 'Price nahi mila, manual Rs. likh do' });
+    }
+
     return NextResponse.json({
       success: true,
-      name,
-      price: price? parseInt(price) : null,
-      image,
+      name: name || 'Daraz Product',
+      price: parseInt(price),
+      image: image,
       affiliate_link: url
     });
 
   } catch (e: any) {
-    return NextResponse.json({ success: false, error: e.message });
+    return NextResponse.json({ success: false, error: e.message || 'Error' });
   }
 }
