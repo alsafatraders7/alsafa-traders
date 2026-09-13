@@ -1,7 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
 export default function AdminPage(){
   const [isAuthenticated,setIsAuthenticated]=useState(false);
   const [checkingAuth,setCheckingAuth]=useState(true);
@@ -34,23 +39,23 @@ export default function AdminPage(){
     const file=e.target.files[0]; if(!file) return; setImageUploading(true);
     const fileName=`${Date.now()}-${file.name}`;
     const {error}=await supabase.storage.from('product-images').upload(fileName,file);
-    if(error){alert('Storage Public ON karo');setImageUploading(false);return;}
+    if(error){alert('Storage Public ON karo: '+error.message);setImageUploading(false);return;}
     const {data}=supabase.storage.from('product-images').getPublicUrl(fileName);
     setForm(f=>({...f,image_url:data.publicUrl}));
     setImageUploading(false);
   };
 
   const handleFetchDaraz=async()=>{
-    if(!form.affiliate_link) return alert('Pehle s.【entity-daraz¦canonical_name=Daraz】.pk?cc wala link dalo');
+    if(!form.affiliate_link) return alert('Pehle s.daraz.pk?cc wala link dalo');
     setDarazFetching(true);
     try{
-      const res=await fetch('/api/【entity-daraz¦canonical_name=Daraz】-price',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:form.affiliate_link})});
+      const res=await fetch('/api/daraz-price',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:form.affiliate_link})});
       const d=await res.json();
       if(d.success && d.price){
         setForm(f=>({...f,name:d.name||f.name,price:String(d.price),image_url:d.image||f.image_url}));
-        alert('【entity-Daraz¦canonical_name=Daraz】 Connected! Rs.'+d.price);
+        alert('Daraz Connected! Rs.'+d.price);
       }else alert('Manual Rs likh do -?cc safe');
-    }catch{alert('Error');}
+    }catch{alert('Error - Manual price likh do');}
     setDarazFetching(false);
   };
 
@@ -98,7 +103,7 @@ export default function AdminPage(){
           <div className="px-4 py-2.5 text-gray-300">Featured - {featured.length}</div>
           <div className="px-4 py-2.5 text-gray-300">Best Sellers - {bestSellers.length}</div>
           <div className="px-4 py-2.5 text-gray-300">Categories - {categoriesList.length||categories.length}</div>
-          <div className="px-4 py-2.5 text-gray-300">Daraz - Total Connected</div>
+          <div className="px-4 py-2.5 text-gray-300">【entity-Daraz¦canonical_name=Daraz】 - Total Connected</div>
           <div className="px-4 py-2.5 text-gray-300">Public Controls - Active</div>
           <button onClick={async()=>{await supabase.auth.signOut();setIsAuthenticated(false);}} className="w-full px-4 py-2.5 text-left text-gray-300 mt-4 border-t border-white/10 pt-4">Lock Panel</button>
         </div>
@@ -134,7 +139,7 @@ export default function AdminPage(){
                 <div className="bg-white rounded-xl p-4 border"><p className="text-[11px] text-gray-500">Total Products</p><p className="text-[22px] font-bold">{products.length}</p></div>
                 <div className="bg-white rounded-xl p-4 border"><p className="text-[11px] text-gray-500">Featured</p><p className="text-[22px] font-bold">{featured.length}</p></div>
                 <div className="bg-white rounded-xl p-4 border"><p className="text-[11px] text-gray-500">Best Sellers</p><p className="text-[22px] font-bold">{bestSellers.length}</p></div>
-                <div className="bg-[#fffaf0] rounded-xl p-4 border"><p className="text-[11px] text-gray-500">【entity-Daraz¦canonical_name=Daraz】 Status</p><p className="text-[14px] font-bold">Total Connected</p><p className="text-[10px] text-green-600">?cc Safe</p></div>
+                <div className="bg-[#fffaf0] rounded-xl p-4 border"><p className="text-[11px] text-gray-500">Daraz Status</p><p className="text-[14px] font-bold">Total Connected</p><p className="text-[10px] text-green-600">?cc Safe</p></div>
               </div>
               <div className="bg-white rounded-xl p-4 border">
                 <p className="font-bold mb-3">Recent Products - {filtered.length} | Theme: {form.display_theme}</p>
