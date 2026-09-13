@@ -60,22 +60,23 @@ export default function AdminPage() {
     const file=e.target.files[0]; if(!file) return; setImageUploading(true);
     const fileName=`${Date.now()}-${file.name}`;
     const {error}=await supabase.storage.from('product-images').upload(fileName,file);
-    if(error){ alert('Supabase > Storage > product-images > Public ON karo'); setImageUploading(false); return; }
+    if(error){ alert('Supabase > Storage > New Bucket > product-images > Public ON karo'); setImageUploading(false); return; }
     const {data}=supabase.storage.from('product-images').getPublicUrl(fileName);
     setForm(f=>({...f, image_url:data.publicUrl}));
     setImageUploading(false);
   };
 
   const handleFetchDaraz=async()=>{
-    if(!form.affiliate_link) return alert('Pehle s.daraz.pk?cc wala link dalo');
+    if(!form.affiliate_link) return alert('Pehle s.【entity-daraz¦canonical_name=Daraz】.pk?cc wala link dalo');
     setDarazFetching(true);
     try{
-      const res=await fetch('/api/daraz-price',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url:form.affiliate_link})});
+      const res=await fetch('/api/【entity-daraz¦canonical_name=Daraz】-price',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url:form.affiliate_link})});
       const d=await res.json();
       if(d.success && d.price){
         setForm(f=>({...f, name: d.name || f.name, price: String(d.price), image_url: d.image || f.image_url}));
-        alert('Daraz Connected! Rs. '+d.price+' PKR Auto Aagaya');
-      } else alert('Price nahi mila - Manual Rs. likh do -?cc safe rahega');
+        alert('【entity-Daraz¦canonical_name=Daraz】 Connected! Rs. '+d.price+' PKR Auto Aagaya - Manual bhi change kar sakte ho');
+      }
+      else alert('Price nahi mila - Manual Rs. likh do -?cc safe rahega');
     }catch{ alert('Error'); }
     setDarazFetching(false);
   };
@@ -85,4 +86,66 @@ export default function AdminPage() {
     const slug=newCatName.toLowerCase().replace(/[^a-z0-9]+/g,'-');
     await supabase.from('categories').insert([{name:newCatName.trim(), slug}]);
     await supabase.from('nav_buttons').insert([{label:newCatName.trim(), slug, type:'category', active:true, order_index:0}]);
-    setNewCatName(''); fetchCategories
+    setNewCatName(''); fetchCategories();
+  };
+  const deleteCategory=async(slug:string)=>{
+    if(!confirm('Public se button hat jayega - Delete?')) return;
+    await supabase.from('categories').delete().eq('slug',slug);
+    await supabase.from('nav_buttons').delete().eq('slug',slug);
+    fetchCategories();
+  };
+
+  const handleLogin=async(e:React.FormEvent)=>{
+    e.preventDefault(); setAuthLoading(true); setAuthError('');
+    const {error}=await supabase.auth.signInWithPassword({email,password});
+    if(error){ setAuthError(error.message); setAuthLoading(false); } else { setIsAuthenticated(true); setAuthLoading(false); }
+  };
+
+  const handleSave=async(e:React.FormEvent)=>{
+    e.preventDefault();
+    const finalPayload = {
+      name:form.name,
+      price:parseFloat(form.price),
+      category:form.category,
+      image_url:form.image_url,
+      affiliate_link:form.affiliate_link,
+      is_best_seller:form.is_best_seller,
+      is_featured:form.is_featured,
+      is_active:true,
+      display_theme:form.display_theme
+    };
+    if(editingProduct){
+      await supabase.from('products').update(finalPayload).eq('id',editingProduct.id);
+    } else {
+      const slug=form.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now();
+      await supabase.from('products').insert([{...finalPayload, slug}]);
+    }
+    setShowAddForm(false); setEditingProduct(null);
+    setForm({ name:'', price:'', category:'', image_url:'', affiliate_link:'', is_best_seller:false, is_featured:false, is_active:true, display_theme:'default' });
+    fetchProducts();
+  };
+
+  const handleEdit=(p:any)=>{ setEditingProduct(p); setForm({ name:p.name, price:String(p.price), category:p.category, image_url:p.image_url, affiliate_link:p.affiliate_link, is_best_seller:p.is_best_seller||false, is_featured:p.is_featured||false, is_active:true, display_theme:p.display_theme||'default' }); setShowAddForm(true); };
+  const handleDelete=async(id:string)=>{ if(!confirm('Delete product?')) return; await supabase.from('products').delete().eq('id',id); fetchProducts(); };
+  const handleAutoUpdate=async(p:any)=>{
+    setUpdatingId(p.id);
+    try{
+      const res=await fetch('/api/【entity-daraz¦canonical_name=Daraz】-price',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url:p.affiliate_link})});
+      const data=await res.json();
+      if(data.success && confirm('New: Rs. '+data.price+' PKR Old: Rs.'+p.price+' Update?')){ await supabase.from('products').update({price:data.price}).eq('id',p.id); fetchProducts(); }
+      else alert(data.error||'Price not found - 【entity-Daraz¦canonical_name=Daraz】 link check karo');
+    }catch(e:any){ alert(e.message); }
+    setUpdatingId(null);
+  };
+
+  const filtered=products.filter((p:any)=>p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const categories=Array.from(new Set(products.map((p:any)=>p.category))) as string[];
+  const bestSellers=products.filter((p:any)=>p.is_best_seller);
+  const featured=products.filter((p:any)=>p.is_featured);
+
+  if(checkingAuth) return <div className="min-h-screen bg-[#0f2e26] text-white flex items-center justify-center">Checking...</div>;
+
+  if(!isAuthenticated){
+    return (
+      <div className="min-h-screen bg-[#0f2e26] flex items-center justify-center p-4">
+        <div className="bg-white rounded-[20px] p-8 w-full max-w-[400px] shadow-2xl">
