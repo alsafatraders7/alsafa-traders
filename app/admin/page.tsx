@@ -77,8 +77,8 @@ export default function AdminPage() {
     try{
       const res=await fetch('/api/daraz-price',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url:p.affiliate_link})});
       const data=await res.json();
-      if(data.success && confirm('Naya: Rs.'+data.price+' Purana: Rs.'+p.price+' Update?')){ await supabase.from('products').update({price:data.price}).eq('id',p.id); fetchProducts(); }
-      else alert(data.error||'Price nahi mila');
+      if(data.success && confirm('New: Rs.'+data.price+' Old: Rs.'+p.price+' Update?')){ await supabase.from('products').update({price:data.price}).eq('id',p.id); fetchProducts(); }
+      else alert(data.error||'Price not found');
     }catch(e:any){ alert(e.message); }
     setUpdatingId(null);
   };
@@ -86,35 +86,29 @@ export default function AdminPage() {
   const filtered=products.filter(p=>p.name.toLowerCase().includes(searchQuery.toLowerCase()));
   const categories=[...new Set(products.map(p=>p.category))];
 
-  if(checkingAuth) return <div className="min-h-screen bg-[#0f2e26] text-white flex items-center justify-center">Checking Lock...</div>;
+  if(checkingAuth) return <div className="min-h-screen bg-[#0f2e26] text-white flex items-center justify-center">Checking...</div>;
 
-if(!isAuthenticated){
+  if(!isAuthenticated){
     return (
       <div className="min-h-screen bg-[#0f2e26] flex items-center justify-center p-4">
         <div className="bg-white rounded-[20px] p-8 w-full max-w-[400px] shadow-2xl">
           <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-[#0f2e26] rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">L</div>
+            <div className="w-16 h-16 bg-[#0f2e26] rounded-full flex items-center justify-center mx-auto mb-3 text-white font-bold">AT</div>
             <h1 className="text-[22px] font-bold">Al Safa Traders</h1>
             <p className="text-[11px] text-gray-500">Admin Panel Locked - Login Required</p>
           </div>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="text-[11px] font-bold">Email</label>
-              <div className="relative mt-1">
-                <input type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="admin@email.com" className="w-full border rounded-xl px-4 py-3 pl-10 text-[14px] outline-none" />
-                <span className="absolute left-3 top-3.5">E</span>
-              </div>
+              <input type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="admin@email.com" className="w-full border rounded-xl px-4 py-3 text-[14px] outline-none mt-1" />
             </div>
             <div>
               <label className="text-[11px] font-bold">Password</label>
-              <div className="relative mt-1">
-                <input type={showPassword? "text" : "password"} required value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" className="w-full border rounded-xl px-4 py-3 pl-10 pr-12 text-[14px] outline-none" />
-                <span className="absolute left-3 top-3.5">K</span>
-                <button type="button" onClick={()=>setShowPassword(!showPassword)} className="absolute right-2 top-2 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                  {showPassword? 'H' : 'S'}
-                </button>
+              <input type={showPassword? "text" : "password"} required value={password} onChange={e=>setPassword(e.target.value)} placeholder="Password" className="w-full border rounded-xl px-4 py-3 text-[14px] outline-none mt-1" />
+              <div className="flex justify-between mt-1">
+                <p className="text-[10px] text-gray-400">{showPassword? 'Visible' : 'Hidden'}</p>
+                <button type="button" onClick={()=>setShowPassword(!showPassword)} className="text-[11px] text-[#0f2e26] font-bold">{showPassword? 'Hide' : 'Show'}</button>
               </div>
-              <p className="text-[10px] text-gray-400 mt-1">{showPassword? 'Visible - Click to hide' : 'Hidden - Click to show'}</p>
             </div>
             {authError && <p className="text-red-600 text-[12px] bg-red-50 p-2 rounded">{authError}</p>}
             <button type="submit" disabled={authLoading} className="w-full bg-[#0f2e26] text-white py-3.5 rounded-xl font-bold">{authLoading? 'Unlocking...' : 'Unlock Admin Panel'}</button>
@@ -127,7 +121,7 @@ if(!isAuthenticated){
   return (
     <div className="min-h-screen bg-[#f8f9f6] flex text-[13px]">
       <div className="w-[260px] bg-[#0f2e26] text-white hidden lg:flex flex-col fixed h-screen">
-        <div className="p-5 flex items-center gap-3"><div className="w-10 h-10 bg-[#d4a15a] rounded-lg flex items-center justify-center">H</div><div><p className="font-bold text-[#f0d9a0]">Al Safa Traders</p><p className="text-[10px] text-gray-400">Quality Products • Better Living</p></div></div>
+        <div className="p-5 flex items-center gap-3"><div className="w-10 h-10 bg-[#d4a15a] rounded-lg flex items-center justify-center font-bold">AT</div><div><p className="font-bold text-[#f0d9a0]">Al Safa Traders</p><p className="text-[10px] text-gray-400">Quality Products</p></div></div>
         <div className="px-3 space-y-0.5 flex-1 overflow-y-auto">
           <div className="bg-[#c49a4b] text-black px-4 py-2.5 rounded-lg font-semibold">Dashboard</div>
           <div className="px-4 py-2.5 text-gray-300">Products - {products.length}</div>
@@ -136,33 +130,33 @@ if(!isAuthenticated){
           <div className="px-4 py-2.5 text-gray-300">Public Website - Live</div>
           <button onClick={async()=>{await supabase.auth.signOut(); setIsAuthenticated(false);}} className="w-full px-4 py-2.5 text-left text-gray-300 mt-4 border-t border-white/10 pt-4">Lock Panel</button>
         </div>
-        <div className="p-4 border-t border-white/10 text-[10px] text-gray-400">{email}<br/>Hide/Show Active<br/>Responsive</div>
+        <div className="p-4 border-t border-white/10 text-[10px] text-gray-400">{email}<br/>Responsive</div>
       </div>
       {mobileMenu && <div className="fixed inset-0 z-50 lg:hidden"><div className="absolute inset-0 bg-black/50" onClick={()=>setMobileMenu(false)}></div><div className="absolute left-0 top-0 w-[270px] h-full bg-[#0f2e26] text-white p-4"><p className="font-bold mb-4">Al Safa Traders</p><button onClick={async()=>{await supabase.auth.signOut(); setIsAuthenticated(false);}} className="w-full px-4 py-2.5 bg-red-500/20 rounded-lg">Lock</button></div></div>}
       <div className="flex-1 lg:ml-[260px]">
         <div className="bg-white border-b px-4 lg:px-6 py-3 flex items-center justify-between sticky top-0 z-20">
-          <div className="flex items-center gap-3 flex-1"><button onClick={()=>setMobileMenu(true)} className="lg:hidden text-[22px]">M</button><input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="Search products, categories..." className="bg-[#f8f9f6] border rounded-lg px-4 py-2 w-full max-w-[350px] text-[13px]" /></div>
-          <div className="flex items-center gap-2"><button onClick={()=>{setEditingProduct(null); setForm({ name:'', price:'', category:'', image_url:'', affiliate_link:'', is_best_seller:false, is_active:true }); setShowAddForm(true);}} className="bg-[#c49a4b] text-black px-4 py-2 rounded-lg text-[12px] font-bold">+ Add New Product</button><button onClick={async()=>{await supabase.auth.signOut(); setIsAuthenticated(false);}} className="border px-3 py-2 rounded-lg text-[11px]">Lock</button></div>
+          <div className="flex items-center gap-3 flex-1"><button onClick={()=>setMobileMenu(true)} className="lg:hidden text-[22px]">Menu</button><input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="Search products..." className="bg-[#f8f9f6] border rounded-lg px-4 py-2 w-full max-w-[350px] text-[13px]" /></div>
+          <div className="flex items-center gap-2"><button onClick={()=>{setEditingProduct(null); setForm({ name:'', price:'', category:'', image_url:'', affiliate_link:'', is_best_seller:false, is_active:true }); setShowAddForm(true);}} className="bg-[#c49a4b] text-black px-4 py-2 rounded-lg text-[12px] font-bold">+ Add Product</button><button onClick={async()=>{await supabase.auth.signOut(); setIsAuthenticated(false);}} className="border px-3 py-2 rounded-lg text-[11px]">Lock</button></div>
         </div>
         <div className="p-3 lg:p-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
             <div className="lg:col-span-2 bg-gradient-to-r from-[#fdf6e3] to-[#f5e6c8] rounded-xl p-5 flex justify-between items-center border">
-              <div><h1 className="text-[22px] font-bold">Welcome Back, Admin!</h1><p className="text-[12px] text-gray-600 mt-1">Manage your products, categories, orders and keep your website updated from here.</p><div className="flex gap-2 mt-4"><a href="https://alsafatraders.pk" target="_blank" className="bg-[#0f2e26] text-white px-4 py-2 rounded-lg text-[12px]">View Public Website</a><span className="bg-[#c49a4b] text-black px-4 py-2 rounded-lg text-[12px] font-bold">Admin Dashboard</span></div><p className="text-[11px] text-green-700 mt-2">https://alsafatraders.pk - Connected</p></div>
+              <div><h1 className="text-[22px] font-bold">Welcome Back, Admin!</h1><p className="text-[12px] text-gray-600 mt-1">Manage your products and keep website updated.</p><div className="flex gap-2 mt-4"><a href="https://alsafatraders.pk" target="_blank" className="bg-[#0f2e26] text-white px-4 py-2 rounded-lg text-[12px]">View Website</a><span className="bg-[#c49a4b] text-black px-4 py-2 rounded-lg text-[12px] font-bold">Dashboard</span></div><p className="text-[11px] text-green-700 mt-2">Connected</p></div>
               <img src="https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=200" className="w-[140px] h-[100px] object-cover rounded-xl hidden md:block" alt="" />
             </div>
             <div className="grid grid-cols-1 gap-4">
-              <div className="bg-white rounded-xl p-4 border"><p className="font-semibold text-[13px]">Website Status</p><p className="text-[12px] mt-1">Live</p><p className="text-[11px] text-gray-500">Your website is live and running smoothly.</p></div>
+              <div className="bg-white rounded-xl p-4 border"><p className="font-semibold text-[13px]">Website Status</p><p className="text-[12px] mt-1">Live</p><p className="text-[11px] text-gray-500">Running smoothly.</p></div>
               <div className="bg-white rounded-xl p-4 border"><p className="font-semibold text-[13px]">Admin Account</p><p className="text-[10px] text-green-700 bg-green-50 p-1 rounded mt-1 truncate">{email} - Locked</p></div>
             </div>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-            <div className="bg-white rounded-xl p-4 border"><p className="text-[11px] text-gray-500">Total Products</p><p className="text-[22px] font-bold">{products.length}</p><p className="text-[10px] text-green-600">Published on website</p></div>
-            <div className="bg-white rounded-xl p-4 border"><p className="text-[11px] text-gray-500">Categories</p><p className="text-[22px] font-bold">{categories.length}</p><p className="text-[10px] text-green-600">Active categories</p></div>
-            <div className="bg-white rounded-xl p-4 border"><p className="text-[11px] text-gray-500">Total Clicks</p><p className="text-[22px] font-bold">1,248</p><p className="text-[10px] text-green-600">From affiliate links</p></div>
-            <div className="bg-[#fffaf0] rounded-xl p-4 border"><p className="text-[11px] text-gray-500">Affiliate Status</p><p className="text-[14px] font-bold">Connected</p><p className="text-[10px] text-green-600">Affiliate Active</p></div>
+            <div className="bg-white rounded-xl p-4 border"><p className="text-[11px] text-gray-500">Total Products</p><p className="text-[22px] font-bold">{products.length}</p><p className="text-[10px] text-green-600">Published</p></div>
+            <div className="bg-white rounded-xl p-4 border"><p className="text-[11px] text-gray-500">Categories</p><p className="text-[22px] font-bold">{categories.length}</p><p className="text-[10px] text-green-600">Active</p></div>
+            <div className="bg-white rounded-xl p-4 border"><p className="text-[11px] text-gray-500">Total Clicks</p><p className="text-[22px] font-bold">1,248</p><p className="text-[10px] text-green-600">Affiliate</p></div>
+            <div className="bg-[#fffaf0] rounded-xl p-4 border"><p className="text-[11px] text-gray-500">Affiliate Status</p><p className="text-[14px] font-bold">Connected</p><p className="text-[10px] text-green-600">Active</p></div>
           </div>
           <div className="bg-white rounded-xl p-4 border">
-            <p className="font-bold mb-3">Recent Products - {filtered.length} - Final Test (Admin to Public to Shop)</p>
+            <p className="font-bold mb-3">Recent Products - {filtered.length}</p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
               {filtered.slice(0,10).map((p:any)=>(
                 <div key={p.id} className="border rounded-xl p-2.5">
@@ -192,7 +186,7 @@ if(!isAuthenticated){
               <input required placeholder="Image URL" value={form.image_url} onChange={e=>setForm({...form, image_url:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px]" />
               <input required placeholder="Affiliate Link (Buy on Daraz)" value={form.affiliate_link} onChange={e=>setForm({...form, affiliate_link:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px] border-orange-300" />
               <div className="flex gap-4 text-[12px]"><label className="flex gap-1 items-center"><input type="checkbox" checked={form.is_best_seller} onChange={e=>setForm({...form, is_best_seller:e.target.checked})} /> Best</label><label className="flex gap-1 items-center"><input type="checkbox" checked={form.is_active} onChange={e=>setForm({...form, is_active:e.target.checked})} /> Active</label></div>
-              <button type="submit" className="w-full bg-[#0f2e26] text-white py-3 rounded-xl">Save - Admin to Public to Shop</button>
+              <button type="submit" className="w-full bg-[#0f2e26] text-white py-3 rounded-xl">Save Product</button>
             </form>
           </div>
         </div>
