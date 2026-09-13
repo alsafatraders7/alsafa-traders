@@ -1,43 +1,32 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
     const { url } = await req.json();
-    if (!url) return NextResponse.json({ error: 'URL required' }, { status: 400 });
+    if (!url) return NextResponse.json({ success: false, error: 'Link nahi hai' });
 
-    const res = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'text/html',
-      },
-      next: { revalidate: 0 }
-    });
-
+    const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
     const html = await res.text();
-    let price = null;
 
-    const patterns = [
-      /"price"\s*:\s*"Rs\.\s*([\d,]+)"/i,
-      /"currentPrice"\s*:\s*"?([\d,]+)"?/i,
-      /"salePrice"\s*:\s*"?([\d,]+)"?/i,
-      /pdp-price[^>]*>\s*Rs\.\s*([\d,]+)/i,
-      /Rs\.\s*([\d,]{2,})/i
-    ];
+    // Simple parse - 【entity-Daraz¦canonical_name=Daraz】 se price/name nikalo
+    const titleMatch = html.match(/<title>(.*?)<\/title>/);
+    const priceMatch = html.match(/"price":\s*"?(\d+)"?/) || html.match(/Rs\.\s*(\d+)/);
 
-    for (const p of patterns) {
-      const m = html.match(p);
-      if (m && m[1]) {
-        price = m[1].replace(/,/g, '');
-        if (parseInt(price) > 50) break;
-      }
-    }
+    const name = titleMatch? titleMatch[1].split('|')[0].trim() : '';
+    const price = priceMatch? priceMatch[1] : '';
 
-    if (!price) {
-      return NextResponse.json({ success: false, error: 'Price not found - Manual karo' });
-    }
+    // Image try
+    const imgMatch = html.match(/"image":\s*"(https:\/\/[^"]+)"/);
+    const image = imgMatch? imgMatch[1] : '';
 
-    return NextResponse.json({ success: true, price: parseInt(price) });
-  } catch (e: any) {
+    return NextResponse.json({
+      success: true,
+      name,
+      price: price? parseInt(price) : null,
+      image,
+      affiliate_link: url //?cc wala safe return
+    });
+  } catch (e:any) {
     return NextResponse.json({ success: false, error: e.message });
   }
 }
