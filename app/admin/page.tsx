@@ -75,7 +75,7 @@ export default function AdminPage() {
   const handleAutoUpdate=async(p:any)=>{
     setUpdatingId(p.id);
     try{
-      const res=await fetch('/api/【entity-daraz¦canonical_name=Daraz】-price',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url:p.affiliate_link})});
+      const res=await fetch('/api/daraz-price',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url:p.affiliate_link})});
       const data=await res.json();
       if(data.success && confirm('New: Rs.'+data.price+' Old: Rs.'+p.price+' Update?')){ await supabase.from('products').update({price:data.price}).eq('id',p.id); fetchProducts(); }
       else alert(data.error||'Price not found');
@@ -83,8 +83,8 @@ export default function AdminPage() {
     setUpdatingId(null);
   };
 
-  const filtered=products.filter(p=>p.name.toLowerCase().includes(searchQuery.toLowerCase()));
-  const categories=[...new Set(products.map(p=>p.category))];
+  const filtered=products.filter((p:any)=>p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const categories=Array.from(new Set(products.map((p:any)=>p.category))) as string[];
 
   if(checkingAuth) return <div className="min-h-screen bg-[#0f2e26] text-white flex items-center justify-center">Checking...</div>;
 
@@ -184,7 +184,7 @@ export default function AdminPage() {
               <input required placeholder="Name" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px]" />
               <div className="grid grid-cols-2 gap-2"><input required type="number" placeholder="Price" value={form.price} onChange={e=>setForm({...form, price:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px]" /><input required placeholder="Category" value={form.category} onChange={e=>setForm({...form, category:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px]" /></div>
               <input required placeholder="Image URL" value={form.image_url} onChange={e=>setForm({...form, image_url:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px]" />
-              <input required placeholder="Affiliate Link (Buy on 【entity-Daraz¦canonical_name=Daraz】)" value={form.affiliate_link} onChange={e=>setForm({...form, affiliate_link:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px] border-orange-300" />
+              <input required placeholder="Affiliate Link (Buy on Daraz)" value={form.affiliate_link} onChange={e=>setForm({...form, affiliate_link:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px] border-orange-300" />
               <div className="flex gap-4 text-[12px]"><label className="flex gap-1 items-center"><input type="checkbox" checked={form.is_best_seller} onChange={e=>setForm({...form, is_best_seller:e.target.checked})} /> Best</label><label className="flex gap-1 items-center"><input type="checkbox" checked={form.is_active} onChange={e=>setForm({...form, is_active:e.target.checked})} /> Active</label></div>
               <button type="submit" className="w-full bg-[#0f2e26] text-white py-3 rounded-xl">Save Product</button>
             </form>
