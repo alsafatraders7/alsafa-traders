@@ -5,6 +5,7 @@ export default function Home() {
   const [products, setProducts] = useState<any[]>([])
   const [search, setSearch] = useState("")
   const [cat, setCat] = useState("Shop All")
+  const [selected, setSelected] = useState<any>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -54,7 +55,7 @@ export default function Home() {
 
       <main className="max-w-6xl mx-auto p-4 grid md:grid-cols-2 gap-6 items-start">
         <div>
-          <div className="bg-white/80 inline-block px-4 py-1 rounded-full text-[11px] font-bold mb-4">2.5M+ HOME COOKS | 155K+ 5 STAR REVIEWS</div>
+          {/* WHITE LINE HATADI - 2.5M+ HOME COOKS wali line khatam */}
           <h1 className="text-[26px] font-black text-[#1A3C34]">Welcome to Safa traders</h1>
           <h2 className="text-[38px] font-black text-[#1A3C34] leading-[0.9] mt-2">
             Everyday Kitchen<br />Essentials for <span className="bg-[#FFEB3B] px-2">Smart Homes</span>
@@ -77,12 +78,19 @@ export default function Home() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
           {filtered.map((p: any) => (
             <div key={p.id} className="bg-white border rounded-[18px] overflow-hidden shadow-sm">
-              <img src={p.image_url || "https://via.placeholder.com/400"} className="h-[190px] w-full object-cover" alt={p.name} />
-              <div className="p-3">
-                <p className="font-bold text-sm line-clamp-1">{p.name}</p>
-                <p className="text-[11px] text-gray-500">{p.category}</p>
-                <p className="font-black mt-1">Rs.{p.price}</p>
-                <a href={p.affiliate_link || "#"} target="_blank" className="block text-center bg-[#FFD814] py-2.5 rounded-full text-xs font-black mt-2">Buy on 【entity-Daraz¦canonical_name=Daraz】</a>
+              {/* PICTURE CLICK FEATURE - Customer detail dekhega */}
+              <div onClick={() => setSelected(p)} className="cursor-pointer">
+                <img src={p.image_url || "https://via.placeholder.com/400"} className="h-[190px] w-full object-cover" alt={p.name} />
+                <div className="p-3">
+                  <p className="font-bold text-sm line-clamp-1">{p.name}</p>
+                  <p className="text-[11px] text-gray-500">{p.category}</p>
+                  <p className="font-black mt-1">Rs.{p.price}</p>
+                </div>
+              </div>
+              <div className="p-3 pt-0">
+                <a href={p.affiliate_link || "#"} target="_blank" onClick={(e) => e.stopPropagation()} className="block text-center bg-[#FFD814] py-2.5 rounded-full text-xs font-black">
+                  Buy on Daraz
+                </a>
               </div>
             </div>
           ))}
@@ -97,6 +105,24 @@ export default function Home() {
           <a href="mailto:alsafatraders7@gmail.com" className="underline">Email: alsafatraders7@gmail.com</a>
         </div>
       </footer>
+
+      {/* PRODUCT DETAIL POPUP - Picture click pe khulega */}
+      {selected && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setSelected(null)}>
+          <div className="bg-white rounded-[20px] max-w-[450px] w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <img src={selected.image_url} className="w-full h-[320px] object-cover rounded-t-[20px]" alt="" />
+            <div className="p-5">
+              <h2 className="text-[18px] font-black text-[#1A3C34]">{selected.name}</h2>
+              <p className="text-[11px] text-gray-500 mt-1">{selected.category} | Rs. {selected.price}</p>
+              <p className="text-[13px] text-[#1A3C34]/80 mt-3">Premium quality - Ghar ke kaam asan banayen! 【entity-Daraz¦canonical_name=Daraz】 pe best price me available.</p>
+              <a href={selected.affiliate_link} target="_blank" className="block w-full bg-[#FFD814] text-center font-black py-3 rounded-full mt-5 text-[14px]">
+                Buy on Daraz
+              </a>
+              <button onClick={() => setSelected(null)} className="block w-full text-center text-[12px] mt-3 text-gray-500">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
