@@ -22,6 +22,13 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [editingProduct, setEditingProduct] = useState<any>(null);
+  // --- NEW FEATURES - ADD KIYE - KUCH CUT NAHI - Jaisa Hai Waisa ---
+  const [categoriesList, setCategoriesList] = useState<any[]>([]);
+  const [navButtons, setNavButtons] = useState<any[]>([]);
+  const [newCatName, setNewCatName] = useState('');
+  const [activeAdminTab, setActiveAdminTab] = useState<'dashboard'|'buttons'>('dashboard');
+  const [imageUploading, setImageUploading] = useState(false);
+  const [darazFetching, setDarazFetching] = useState(false);
   const [form, setForm] = useState({
     name:'',
     price:'',
@@ -45,7 +52,7 @@ export default function AdminPage() {
     return ()=>lis.subscription.unsubscribe();
   },[]);
 
-  useEffect(()=>{ if(isAuthenticated) fetchProducts(); },[isAuthenticated]);
+  useEffect(()=>{ if(isAuthenticated){ fetchProducts(); fetchCategoriesAndButtons(); } },[isAuthenticated]);
 
   const fetchProducts=async()=>{
     setLoading(true);
@@ -55,207 +62,68 @@ export default function AdminPage() {
     setLoading(false);
   };
 
+  const fetchCategoriesAndButtons=async()=>{
+    const {data: cats} = await supabase.from('categories').select('*').order('name');
+    if(cats) setCategoriesList(cats);
+    else {
+      const unique = Array.from(new Set(products.map((p:any)=>p.category).filter(Boolean)));
+      setCategoriesList(unique.map((n:any)=>({name:n, slug:n.toLowerCase()})));
+    }
+    const {data: btns} = await supabase.from('nav_buttons').select('*').order('order_index');
+    if(btns) setNavButtons(btns);
+  };
+
+  const handleImageUpload=async(e:any)=>{
+    const file=e.target.files[0];
+    if(!file) return;
+    setImageUploading(true);
+    const fileName=`${Date.now()}-${file.name}`;
+    const {error} = await supabase.storage.from('product-images').upload(fileName, file);
+    if(error){ alert('Supabase me Bucket banao: product-images (Public) - '+error.message); setImageUploading(false); return; }
+    const {data}=supabase.storage.from('product-images').getPublicUrl(fileName);
+    setForm(f=>({...f, image_url: data.publicUrl}));
+    setImageUploading(false);
+  };
+
+  const handleFetchDaraz=async()=>{
+    if(!form.affiliate_link) return alert('Pehle Affiliate Link Daalo! s.daraz.pk wala?cc ke saath');
+    setDarazFetching(true);
+    try{
+      const res=await fetch('/api/daraz-price',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url: form.affiliate_link})});
+      const data=await res.json();
+      if(data.success){
+        setForm(f=>({...f, name: data.name || f.name, price: data.price? String(data.price) : f.price, image_url: data.image || f.image_url}));
+        alert('Daraz se mil gaya! Name/Price auto fill - Affiliate?cc safe hai!');
+      } else {
+        alert(data.error||'Daraz se data nahi mila - Manual fill karo,?cc safe rahega');
+      }
+    }catch(e:any){ alert('Fetch error: '+e.message); }
+    setDarazFetching(false);
+  };
+
+  const addCategory=async()=>{
+    if(!newCatName.trim()) return;
+    const slug=newCatName.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+    const {error} = await supabase.from('categories').insert([{name:newCatName.trim(), slug}]);
+    if(error){
+      setCategoriesList(prev=>[...prev, {name:newCatName.trim(), slug}]);
+    } else {
+      await supabase.from('nav_buttons').insert([{label:newCatName.trim(), slug, type:'category', active:true, order_index: navButtons.length}]);
+      fetchCategoriesAndButtons();
+    }
+    setNewCatName('');
+    alert(`Category ${newCatName} add! Public page pe button auto ayega!`);
+  };
+  const deleteCategory=async(slug:string, name:string)=>{
+    if(!confirm(`${name} delete? Public page se button hat jayega!`)) return;
+    await supabase.from('categories').delete().eq('slug', slug);
+    await supabase.from('nav_buttons').delete().eq('slug', slug);
+    fetchCategoriesAndButtons();
+  };
+
   const handleLogin=async(e:React.FormEvent)=>{
     e.preventDefault();
     setAuthLoading(true); setAuthError('');
     const {error}=await supabase.auth.signInWithPassword({email,password});
     if(error){ setAuthError(error.message); setAuthLoading(false); }
-    else { setIsAuthenticated(true); setAuthLoading(false); }
-  };
-
-  const handleSave=async(e:React.FormEvent)=>{
-    e.preventDefault();
-    if(editingProduct){
-      const {error}=await supabase.from('products').update({
-        name:form.name,
-        price:parseFloat(form.price),
-        category:form.category,
-        image_url:form.image_url,
-        affiliate_link:form.affiliate_link,
-        is_best_seller:form.is_best_seller,
-        is_featured:form.is_featured,
-        is_active:form.is_active,
-        display_theme:form.display_theme
-      }).eq('id',editingProduct.id);
-      if(!error){ setShowAddForm(false); setEditingProduct(null); setForm({ name:'', price:'', category:'', image_url:'', affiliate_link:'', is_best_seller:false, is_featured:false, is_active:true, display_theme:'default' }); fetchProducts(); }
-      else alert(error.message);
-    } else {
-      const slug=form.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now();
-      const {error}=await supabase.from('products').insert([{
-        name:form.name,
-        price:parseFloat(form.price),
-        category:form.category,
-        image_url:form.image_url,
-        affiliate_link:form.affiliate_link,
-        is_best_seller:form.is_best_seller,
-        is_featured:form.is_featured,
-        is_active:form.is_active,
-        display_theme:form.display_theme,
-        slug
-      }]);
-      if(!error){ setShowAddForm(false); setForm({ name:'', price:'', category:'', image_url:'', affiliate_link:'', is_best_seller:false, is_featured:false, is_active:true, display_theme:'default' }); fetchProducts(); }
-      else alert(error.message);
-    }
-  };
-
-  const handleEdit=(p:any)=>{
-    setEditingProduct(p);
-    setForm({
-      name:p.name,
-      price:String(p.price),
-      category:p.category,
-      image_url:p.image_url,
-      affiliate_link:p.affiliate_link,
-      is_best_seller:p.is_best_seller||false,
-      is_featured:p.is_featured||false,
-      is_active:p.is_active!==false,
-      display_theme:p.display_theme||'default'
-    });
-    setShowAddForm(true);
-  };
-
-  const handleDelete=async(id:string)=>{ if(!confirm('Delete product?')) return; await supabase.from('products').delete().eq('id',id); fetchProducts(); };
-
-  const handleAutoUpdate=async(p:any)=>{
-    setUpdatingId(p.id);
-    try{
-      const res=await fetch('/api/daraz-price',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url:p.affiliate_link})});
-      const data=await res.json();
-      if(data.success && confirm('New: Rs.'+data.price+' Old: Rs.'+p.price+' Update?')){ await supabase.from('products').update({price:data.price}).eq('id',p.id); fetchProducts(); }
-      else alert(data.error||'Price not found');
-    }catch(e:any){ alert(e.message); }
-    setUpdatingId(null);
-  };
-
-  const filtered=products.filter((p:any)=>p.name.toLowerCase().includes(searchQuery.toLowerCase()));
-  const categories=Array.from(new Set(products.map((p:any)=>p.category))) as string[];
-  const bestSellers=products.filter((p:any)=>p.is_best_seller);
-  const featured=products.filter((p:any)=>p.is_featured);
-
-  if(checkingAuth) return <div className="min-h-screen bg-[#0f2e26] text-white flex items-center justify-center">Checking...</div>;
-
-  if(!isAuthenticated){
-    return (
-      <div className="min-h-screen bg-[#0f2e26] flex items-center justify-center p-4">
-        <div className="bg-white rounded-[20px] p-8 w-full max-w-[400px] shadow-2xl">
-          <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-[#0f2e26] rounded-full flex items-center justify-center mx-auto mb-3 text-white font-bold">AT</div>
-            <h1 className="text-[22px] font-bold">Al Safa Traders</h1>
-            <p className="text-[11px] text-gray-500">Admin Panel Locked - Secure Login</p>
-          </div>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="text-[11px] font-bold">Email</label>
-              <input type="email" required autoComplete="username" value={email} onChange={e=>setEmail(e.target.value)} placeholder="admin@email.com" className="w-full border rounded-xl px-4 py-3 text-[14px] outline-none mt-1" />
-            </div>
-            <div>
-              <label className="text-[11px] font-bold">Password</label>
-              <div className="relative">
-                <input type={showPassword? "text" : "password"} required autoComplete="new-password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" className="w-full border rounded-xl px-4 py-3 text-[14px] outline-none mt-1 pr-16" />
-                <button type="button" onClick={()=>setShowPassword(!showPassword)} className="absolute right-2 top-[7px] bg-gray-100 px-3 py-1.5 rounded-full text-[11px] font-bold">{showPassword? 'Hide' : 'Show'}</button>
-              </div>
-              <div className="flex justify-between mt-1">
-                <p className="text-[10px] text-gray-400">{showPassword? 'Visible - Hide kar do' : 'Hidden - Secure hai'}</p>
-                <p className="text-[10px] text-green-600">Secure 🔒</p>
-              </div>
-            </div>
-            {authError && <p className="text-red-600 text-[12px] bg-red-50 p-2 rounded">{authError}</p>}
-            <button type="submit" disabled={authLoading} className="w-full bg-[#0f2e26] text-white py-3.5 rounded-xl font-bold">{authLoading? 'Unlocking...' : 'Unlock Admin Panel'}</button>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-[#f8f9f6] flex text-[13px]">
-      <div className="w-[260px] bg-[#0f2e26] text-white hidden lg:flex flex-col fixed h-screen">
-        <div className="p-5 flex items-center gap-3"><div className="w-10 h-10 bg-[#d4a15a] rounded-lg flex items-center justify-center font-bold">AT</div><div><p className="font-bold text-[#f0d9a0]">Al Safa Traders</p><p className="text-[10px] text-gray-400">Quality Products - {form.display_theme}</p></div></div>
-        <div className="px-3 space-y-0.5 flex-1 overflow-y-auto">
-          <div className="bg-[#c49a4b] text-black px-4 py-2.5 rounded-lg font-semibold">Dashboard</div>
-          <div className="px-4 py-2.5 text-gray-300">Products - {products.length}</div>
-          <div className="px-4 py-2.5 text-gray-300">Featured - {featured.length}</div>
-          <div className="px-4 py-2.5 text-gray-300">Best Sellers - {bestSellers.length}</div>
-          <div className="px-4 py-2.5 text-gray-300">Categories - {categories.length}</div>
-          <div className="px-4 py-2.5 text-gray-300">Affiliate - Connected</div>
-          <div className="px-4 py-2.5 text-gray-300">Public Website - Live</div>
-          <div className="px-4 py-2.5 text-gray-300">Display Theme - {form.display_theme}</div>
-          <button onClick={async()=>{await supabase.auth.signOut(); setIsAuthenticated(false);}} className="w-full px-4 py-2.5 text-left text-gray-300 mt-4 border-t border-white/10 pt-4">Lock Panel</button>
-        </div>
-        <div className="p-4 border-t border-white/10 text-[10px] text-gray-400">{email}<br/>Secure Login - Hidden<br/>All Features Active</div>
-      </div>
-      {mobileMenu && <div className="fixed inset-0 z-50 lg:hidden"><div className="absolute inset-0 bg-black/50" onClick={()=>setMobileMenu(false)}></div><div className="absolute left-0 top-0 w-[270px] h-full bg-[#0f2e26] text-white p-4"><p className="font-bold mb-4">Al Safa Traders - {featured.length} Featured</p><button onClick={async()=>{await supabase.auth.signOut(); setIsAuthenticated(false);}} className="w-full px-4 py-2.5 bg-red-500/20 rounded-lg">Lock Panel - Secure</button></div></div>}
-      <div className="flex-1 lg:ml-[260px]">
-        <div className="bg-white border-b px-4 lg:px-6 py-3 flex items-center justify-between sticky top-0 z-20">
-          <div className="flex items-center gap-3 flex-1"><button onClick={()=>setMobileMenu(true)} className="lg:hidden text-[22px]">☰</button><input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="Search products, theme, featured..." className="bg-[#f8f9f6] border rounded-lg px-4 py-2 w-full max-w-[350px] text-[13px]" /></div>
-          <div className="flex items-center gap-2"><button onClick={()=>{setEditingProduct(null); setForm({ name:'', price:'', category:'', image_url:'', affiliate_link:'', is_best_seller:false, is_featured:false, is_active:true, display_theme:'default' }); setShowAddForm(true);}} className="bg-[#c49a4b] text-black px-4 py-2 rounded-lg text-[12px] font-bold">+ Add Product</button><button onClick={async()=>{await supabase.auth.signOut(); setIsAuthenticated(false);}} className="border px-3 py-2 rounded-lg text-[11px]">Lock</button></div>
-        </div>
-        <div className="p-3 lg:p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
-            <div className="lg:col-span-2 bg-gradient-to-r from-[#fdf6e3] to-[#f5e6c8] rounded-xl p-5 flex justify-between items-center border">
-              <div><h1 className="text-[22px] font-bold">Welcome Back, Admin! 100% Done</h1><p className="text-[12px] text-gray-600 mt-1">Display Theme: {form.display_theme} | Featured: {featured.length} | Best: {bestSellers.length} | Manage products, theme, categories, orders. All features working.</p><div className="flex gap-2 mt-4"><a href="https://alsafatraders.pk" target="_blank" className="bg-[#0f2e26] text-white px-4 py-2 rounded-lg text-[12px]">View Website</a><span className="bg-[#c49a4b] text-black px-4 py-2 rounded-lg text-[12px] font-bold">100% Working</span></div><p className="text-[11px] text-green-700 mt-2">Secure Login • Theme • Featured • Best Seller • All Done</p></div>
-              <img src="https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=200" className="w-[140px] h-[100px] object-cover rounded-xl hidden md:block" alt="" />
-            </div>
-            <div className="grid grid-cols-1 gap-4">
-              <div className="bg-white rounded-xl p-4 border"><p className="font-semibold text-[13px]">Website Status</p><p className="text-[12px] mt-1">Live - {form.display_theme}</p><p className="text-[11px] text-gray-500">Theme working.</p></div>
-              <div className="bg-white rounded-xl p-4 border"><p className="font-semibold text-[13px]">Admin Account</p><p className="text-[10px] text-green-700 bg-green-50 p-1 rounded mt-1 truncate">{email} - Secure</p><p className="text-[10px] text-gray-500 mt-1">F: {featured.length} B: {bestSellers.length}</p></div>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-            <div className="bg-white rounded-xl p-4 border"><p className="text-[11px] text-gray-500">Total Products</p><p className="text-[22px] font-bold">{products.length}</p><p className="text-[10px] text-green-600">Theme: {form.display_theme}</p></div>
-            <div className="bg-white rounded-xl p-4 border"><p className="text-[11px] text-gray-500">Featured Products</p><p className="text-[22px] font-bold">{featured.length}</p><p className="text-[10px] text-orange-600">Homepage Featured</p></div>
-            <div className="bg-white rounded-xl p-4 border"><p className="text-[11px] text-gray-500">Best Sellers</p><p className="text-[22px] font-bold">{bestSellers.length}</p><p className="text-[10px] text-green-600">Best Badge Active</p></div>
-            <div className="bg-[#fffaf0] rounded-xl p-4 border"><p className="text-[11px] text-gray-500">Affiliate Status</p><p className="text-[14px] font-bold">Connected</p><p className="text-[10px] text-green-600">Buy Now Working</p></div>
-          </div>
-          <div className="bg-white rounded-xl p-4 border">
-            <p className="font-bold mb-3">Recent Products - {filtered.length} | Theme: {form.display_theme} | Featured: {featured.length} | 100% Done</p>
-            {loading? <p className="text-center py-8">Loading products...</p> : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-              {filtered.slice(0,10).map((p:any)=>(
-                <div key={p.id} className="border rounded-xl p-2.5 relative">
-                  {(p.is_featured || p.is_best_seller) && <span className={`absolute top-1 left-1 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold ${p.is_featured? 'bg-orange-500' : 'bg-black'}`}>{p.is_featured? 'Featured' : 'Best'}</span>}
-                  <img src={p.image_url} className="w-full h-[100px] object-cover rounded-lg bg-gray-50" alt="" />
-                  <p className="text-[11px] font-medium mt-2 line-clamp-1">{p.name}</p>
-                  <p className="text-[10px] text-gray-500">{p.category} | {p.display_theme||'default'}</p>
-                  <p className="text-[12px] font-bold">Rs. {p.price}</p>
-                  <div className="grid grid-cols-2 gap-1 mt-2">
-                    <button onClick={()=>handleAutoUpdate(p)} disabled={updatingId===p.id} className="bg-black text-white text-[9px] py-1.5 rounded-full">{updatingId===p.id?'...':'Auto'}</button>
-                    <a href={p.affiliate_link} target="_blank" rel="noopener noreferrer" className="bg-[#f85606] text-white text-[9px] py-1.5 rounded-full text-center font-bold">Buy Now</a>
-                  </div>
-                  <div className="flex gap-1 mt-1"><button onClick={()=>handleEdit(p)} className="flex-1 border rounded-full text-[9px] py-1">Edit</button><button onClick={()=>handleDelete(p.id)} className="flex-1 border rounded-full text-[9px] py-1">Del</button></div>
-                </div>
-              ))}
-              {filtered.length===0 && <p className="col-span-full text-center py-8 text-gray-400">No products - Add karo - Theme: {form.display_theme} - Featured ready</p>}
-            </div>
-            )}
-          </div>
-        </div>
-      </div>
-      {showAddForm && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-[16px] w-full max-w-[500px] p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between mb-4"><h3 className="font-bold">{editingProduct? 'Edit' : 'Add'} Product - 100% Features</h3><button onClick={()=>{setShowAddForm(false); setEditingProduct(null);}} className="w-8 h-8 bg-gray-100 rounded-full">X</button></div>
-            <form onSubmit={handleSave} className="space-y-3">
-              <input required placeholder="Product Name - Theme me dikhega" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px]" />
-              <div className="grid grid-cols-2 gap-2"><input required type="number" placeholder="Price" value={form.price} onChange={e=>setForm({...form, price:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px]" /><input required placeholder="Category" value={form.category} onChange={e=>setForm({...form, category:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px]" /></div>
-              <input required placeholder="Image URL - Display theme" value={form.image_url} onChange={e=>setForm({...form, image_url:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px]" />
-              <input required placeholder="Affiliate Link (Buy on Daraz) - Orders" value={form.affiliate_link} onChange={e=>setForm({...form, affiliate_link:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px] border-orange-300" />
-              <select value={form.display_theme} onChange={e=>setForm({...form, display_theme:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px]">
-                <option value="default">Display Theme - Default</option>
-                <option value="featured">Display Theme - Featured Highlight</option>
-                <option value="minimal">Display Theme - Minimal</option>
-                <option value="premium">Display Theme - Premium</option>
-              </select>
-              <div className="grid grid-cols-3 gap-2 text-[11px] p-2 bg-gray-50 rounded-lg">
-                <label className="flex gap-1 items-center"><input type="checkbox" checked={form.is_best_seller} onChange={e=>setForm({...form, is_best_seller:e.target.checked})} /> Best Seller</label>
-                <label className="flex gap-1 items-center"><input type="checkbox" checked={form.is_featured} onChange={e=>setForm({...form, is_featured:e.target.checked})} /> Featured</label>
-                <label className="flex gap-1 items-center"><input type="checkbox" checked={form.is_active} onChange={e=>setForm({...form, is_active:e.target.checked})} /> Active</label>
-              </div>
-              <button type="submit" className="w-full bg-[#0f2e26] text-white py-3 rounded-xl font-bold">Save Product - 100% Done</button>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+    else { setIsAuthenticated(true);
