@@ -67,14 +67,14 @@ export default function AdminPage() {
   };
 
   const handleFetchDaraz=async()=>{
-    if(!form.affiliate_link) return alert('Pehle s.daraz.pk?cc wala link dalo');
+    if(!form.affiliate_link) return alert('Pehle s.【entity-daraz¦canonical_name=Daraz】.pk?cc wala link dalo');
     setDarazFetching(true);
     try{
-      const res=await fetch('/api/daraz-price',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url:form.affiliate_link})});
+      const res=await fetch('/api/【entity-daraz¦canonical_name=Daraz】-price',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url:form.affiliate_link})});
       const d=await res.json();
       if(d.success && d.price){
         setForm(f=>({...f, name: d.name || f.name, price: String(d.price), image_url: d.image || f.image_url}));
-        alert('Daraz Connected! Rs. '+d.price+' PKR Auto Aagaya');
+        alert('【entity-Daraz¦canonical_name=Daraz】 Connected! Rs. '+d.price+' PKR Auto Aagaya');
       } else alert('Price nahi mila - Manual Rs. likh do -?cc safe rahega');
     }catch{ alert('Error'); }
     setDarazFetching(false);
@@ -143,12 +143,11 @@ export default function AdminPage() {
   const featured=products.filter((p:any)=>p.is_featured);
 
   if(checkingAuth) return <div className="min-h-screen bg-[#0f2e26] text-white flex items-center justify-center">Checking...</div>;
-
   if(!isAuthenticated){
     return (
       <div className="min-h-screen bg-[#0f2e26] flex items-center justify-center p-4">
         <div className="bg-white rounded-[20px] p-8 w-full max-w-[400px] shadow-2xl">
-          <div className="text-center mb-6"><div className="w-16 h-16 bg-[#0f2e26] rounded-full flex items-center justify-center mx-auto mb-3 text-white font-bold">AT</div><h1 className="text-[22px] font-bold">Al Safa Traders</h1><p className="text-[11px] text-gray-500">Admin Panel Locked - Secure Login</p></div>
+          <div className="text-center mb-6"><div className="w-16 h-16 bg-[#0f2e26] rounded-full flex items-center justify-center mx-auto mb-3 text-white font-bold">AT</div><h1 className="text-[22px] font-bold">Al Safa Traders</h1><p className="text-[11px] text-gray-500">Admin Panel Locked</p></div>
           <form onSubmit={handleLogin} className="space-y-4">
             <div><label className="text-[11px] font-bold">Email</label><input type="email" required value={email} onChange={e=>setEmail(e.target.value)} className="w-full border rounded-xl px-4 py-3 text-[14px] mt-1" /></div>
             <div><label className="text-[11px] font-bold">Password</label><div className="relative"><input type={showPassword? "text" : "password"} required value={password} onChange={e=>setPassword(e.target.value)} className="w-full border rounded-xl px-4 py-3 text-[14px] mt-1 pr-16" /><button type="button" onClick={()=>setShowPassword(!showPassword)} className="absolute right-2 top-[7px] bg-gray-100 px-3 py-1.5 rounded-full text-[11px] font-bold">{showPassword? 'Hide' : 'Show'}</button></div></div>
@@ -174,7 +173,7 @@ export default function AdminPage() {
           <div className="px-4 py-2.5 text-gray-300">Public Controls - Active</div>
           <button onClick={async()=>{await supabase.auth.signOut(); setIsAuthenticated(false);}} className="w-full px-4 py-2.5 text-left text-gray-300 mt-4 border-t border-white/10 pt-4">Lock Panel</button>
         </div>
-        <div className="p-4 border-t border-white/10 text-[10px] text-gray-400">{email}<br/>Secure Login - All Features</div>
+        <div className="p-4 border-t border-white/10 text-[10px] text-gray-400">{email}</div>
       </div>
       {mobileMenu && <div className="fixed inset-0 z-50 lg:hidden"><div className="absolute inset-0 bg-black/50" onClick={()=>setMobileMenu(false)}></div><div className="absolute left-0 top-0 w-[270px] h-full bg-[#0f2e26] text-white p-4"><p className="font-bold mb-4">Al Safa Traders</p><button onClick={async()=>{await supabase.auth.signOut(); setIsAuthenticated(false);}} className="w-full px-4 py-2.5 bg-red-500/20 rounded-lg">Lock</button></div></div>}
       <div className="flex-1 lg:ml-[260px]">
@@ -185,8 +184,8 @@ export default function AdminPage() {
         <div className="p-3 lg:p-6">
           {activeTab==='buttons'? (
             <div className="bg-white rounded-xl p-5 border">
-              <h2 className="font-bold text-[16px]">Public Page Ke Sare Controls - Admin Se - Daraz Total Connect</h2>
-              <p className="text-[11px] text-gray-500">Yahan se Shop All | Bartan | Crockery | Electronics | Kids | Kitchen | Storage wale buttons control honge - Daraz?cc Safe</p>
+              <h2 className="font-bold text-[16px]">Public Page Ke Sare Controls - Admin Se - 【entity-Daraz Total Connect¦canonical_name=Daraz】</h2>
+              <p className="text-[11px] text-gray-500">Yahan se Shop All | Bartan | Crockery | Electronics | Kids | Kitchen | Storage wale buttons control honge - 【entity-Daraz¦canonical_name=Daraz】?cc Safe</p>
               <div className="flex gap-2 mt-4"><input value={newCatName} onChange={e=>setNewCatName(e.target.value)} placeholder="Nayi Category - Jaise Toys" className="flex-1 border rounded-xl px-4 py-2.5" /><button onClick={addCategory} className="bg-black text-white px-5 rounded-xl font-bold">+ Add Button</button></div>
               <div className="grid grid-cols-2 gap-2 mt-4">
                 {categoriesList.map((c:any)=>(<div key={c.slug} className="flex justify-between border rounded-xl p-3"><span>{c.name}</span><button onClick={()=>deleteCategory(c.slug)} className="text-red-500 text-[11px]">Delete</button></div>))}
@@ -197,5 +196,85 @@ export default function AdminPage() {
             <>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
                 <div className="lg:col-span-2 bg-gradient-to-r from-[#fdf6e3] to-[#f5e6c8] rounded-xl p-5 flex justify-between items-center border">
-                  <div><h1 className="text-[22px] font-bold">Welcome Back, Admin! 100% Done</h1><p className="text-[12px] text-gray-600 mt-1">Daraz Total Connected: {form.display_theme} | Featured: {featured.length} | Best: {bestSellers.length} | Public Controls Active</p><div className="flex gap-2 mt-4"><a href="https://alsafatraders.pk" target="_blank" className="bg-[#0f2e26] text-white px-4 py-2 rounded-lg text-[12px]">View Website</a><span className="bg-[#c49a4b] text-black px-4 py-2 rounded-lg text-[12px] font-bold">100% Working</span></div></div>
-                  <img src="https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=200" className
+                  <div><h1 className="text-[22px] font-bold">Welcome Back, Admin! 100% Done</h1><p className="text-[12px] text-gray-600 mt-1">【entity-Daraz¦canonical_name=Daraz】 Total Connected: {form.display_theme} | Featured: {featured.length} | Best: {bestSellers.length} | Public Controls Active</p><div className="flex gap-2 mt-4"><a href="https://alsafatraders.pk" target="_blank" className="bg-[#0f2e26] text-white px-4 py-2 rounded-lg text-[12px]">View Website</a><span className="bg-[#c49a4b] text-black px-4 py-2 rounded-lg text-[12px] font-bold">100% Working</span></div></div>
+                  <img src="https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=200" className="w-[140px] h-[100px] object-cover rounded-xl hidden md:block" alt="" />
+                </div>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="bg-white rounded-xl p-4 border"><p className="font-semibold text-[13px]">Website Status</p><p className="text-[12px] mt-1">Live - 【entity-Daraz¦canonical_name=Daraz】 Connected</p></div>
+                  <div className="bg-white rounded-xl p-4 border"><p className="font-semibold text-[13px]">Admin Account</p><p className="text-[10px] text-green-700 bg-green-50 p-1 rounded mt-1 truncate">{email} - Secure</p></div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                <div className="bg-white rounded-xl p-4 border"><p className="text-[11px] text-gray-500">Total Products</p><p className="text-[22px] font-bold">{products.length}</p></div>
+                <div className="bg-white rounded-xl p-4 border"><p className="text-[11px] text-gray-500">Featured</p><p className="text-[22px] font-bold">{featured.length}</p></div>
+                <div className="bg-white rounded-xl p-4 border"><p className="text-[11px] text-gray-500">Best Sellers</p><p className="text-[22px] font-bold">{bestSellers.length}</p></div>
+                <div className="bg-[#fffaf0] rounded-xl p-4 border"><p className="text-[11px] text-gray-500">【entity-Daraz¦canonical_name=Daraz】 Status</p><p className="text-[14px] font-bold">Total Connected</p><p className="text-[10px] text-green-600">?cc Safe</p></div>
+              </div>
+              <div className="bg-white rounded-xl p-4 border">
+                <p className="font-bold mb-3">Recent Products - {filtered.length} | Theme: {form.display_theme}</p>
+                {loading? <p className="text-center py-8">Loading...</p> : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+                  {filtered.slice(0,10).map((p:any)=>(
+                    <div key={p.id} className="border rounded-xl p-2.5 relative">
+                      {(p.is_featured || p.is_best_seller) && <span className={`absolute top-1 left-1 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold ${p.is_featured? 'bg-orange-500' : 'bg-black'}`}>{p.is_featured? 'Featured' : 'Best'}</span>}
+                      <img src={p.image_url} className="w-full h-[100px] object-cover rounded-lg bg-gray-50" alt="" />
+                      <p className="text-[11px] font-medium mt-2 line-clamp-1">{p.name}</p>
+                      <p className="text-[10px] text-gray-500">{p.category} | {p.display_theme||'default'}</p>
+                      <p className="text-[12px] font-bold">Rs. {p.price} PKR</p>
+                      <div className="grid grid-cols-2 gap-1 mt-2">
+                        <button onClick={()=>handleAutoUpdate(p)} disabled={updatingId===p.id} className="bg-black text-white text-[9px] py-1.5 rounded-full">{updatingId===p.id?'...':'Auto Rs.'}</button>
+                        <a href={p.affiliate_link} target="_blank" className="bg-[#f85606] text-white text-[9px] py-1.5 rounded-full text-center font-bold">Buy Now</a>
+                      </div>
+                      <div className="flex gap-1 mt-1"><button onClick={()=>handleEdit(p)} className="flex-1 border rounded-full text-[9px] py-1">Edit</button><button onClick={()=>handleDelete(p.id)} className="flex-1 border rounded-full text-[9px] py-1">Del</button></div>
+                    </div>
+                  ))}
+                  {filtered.length===0 && <p className="col-span-full text-center py-8 text-gray-400">No products - Add karo - 【entity-Daraz¦canonical_name=Daraz】 Connected</p>}
+                </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+      {showAddForm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[16px] w-full max-w-[500px] p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between mb-4"><h3 className="font-bold">{editingProduct? 'Edit' : 'Add'} Product - 【entity-Daraz Total Connect¦canonical_name=Daraz】</h3><button onClick={()=>{setShowAddForm(false); setEditingProduct(null);}} className="w-8 h-8 bg-gray-100 rounded-full">X</button></div>
+            <form onSubmit={handleSave} className="space-y-3">
+              <input required placeholder="Product Name" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px]" />
+              <div className="grid grid-cols-2 gap-2">
+                <input required type="number" placeholder="Price - 【entity-Daraz¦canonical_name=Daraz】 Auto (Rs. PKR)" value={form.price} onChange={e=>setForm({...form, price:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px]" />
+                <select required value={form.category} onChange={e=>setForm({...form, category:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px] bg-yellow-50 font-bold">
+                  <option value="">Category - Public Control</option>
+                  {categoriesList.map((c:any)=><option key={c.slug} value={c.name}>{c.name}</option>)}
+                  {categories.map((c:string)=><option key={c} value={c}>{c}</option>)}
+                  <option value="Kitchen">Kitchen</option><option value="Bartan">Bartan</option><option value="Storage">Storage</option>
+                </select>
+              </div>
+              <div className="p-3 border rounded-lg bg-gray-50">
+                <label className="text-[11px] font-bold">Gallery Se Upload - Public Control</label>
+                <input type="file" accept="image/*" onChange={handleImageUpload} className="w-full mt-1 text-[12px]" />
+                {imageUploading && <p className="text-[10px] text-blue-600">Uploading...</p>}
+                <input required placeholder="Image URL" value={form.image_url} onChange={e=>setForm({...form, image_url:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px] mt-2 bg-white" />
+                {form.image_url && <img src={form.image_url} className="w-20 h-20 rounded-lg mt-2 object-cover border" alt="" />}
+              </div>
+              <div className="flex gap-2">
+                <input required placeholder="Affiliate Link s.daraz.pk?cc Safe" value={form.affiliate_link} onChange={e=>setForm({...form, affiliate_link:e.target.value})} className="flex-1 border rounded-lg px-3 py-2.5 text-[13px] border-orange-300" />
+                <button type="button" onClick={handleFetchDaraz} disabled={darazFetching} className="bg-black text-white px-3 rounded-lg text-[11px] font-bold">{darazFetching?'...':'Daraz Auto'}</button>
+              </div>
+              <select value={form.display_theme} onChange={e=>setForm({...form, display_theme:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px]">
+                <option value="default">Display Theme - Default - Public</option><option value="featured">Featured Highlight - Public</option><option value="minimal">Minimal - Public</option><option value="premium">Premium - Public</option>
+              </select>
+              <div className="grid grid-cols-3 gap-2 text-[11px] p-2 bg-gray-50 rounded-lg">
+                <label className="flex gap-1 items-center"><input type="checkbox" checked={form.is_best_seller} onChange={e=>setForm({...form, is_best_seller:e.target.checked})} /> Best Seller</label>
+                <label className="flex gap-1 items-center"><input type="checkbox" checked={form.is_featured} onChange={e=>setForm({...form, is_featured:e.target.checked})} /> Featured</label>
+                <label className="flex gap-1 items-center"><input type="checkbox" checked={form.is_active} onChange={e=>setForm({...form, is_active:e.target.checked})} /> Active</label>
+              </div>
+              <button type="submit" className="w-full bg-[#0f2e26] text-white py-3 rounded-xl font-bold">Save - Daraz Total Connected - Public Live</button>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
