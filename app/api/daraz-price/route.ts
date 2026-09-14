@@ -1,38 +1,73 @@
 import { NextResponse } from "next/server";
-const CC_CODE = process.env.DARAZ_CC_CODE || "";
-function getSafeUrl(url: string) {
-  if (!url) return url;
-  if (url.includes("?cc") || url.includes("&cc")) return url;
-  if (CC_CODE) return url.includes("?")? url + "&cc=" + CC_CODE : url + "?cc=" + CC_CODE;
-  return url;
-}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const url = body.url;
-    if (!url) return NextResponse.json({ success: false, error: 'Link nahi hai' });
-    const finalUrl = getSafeUrl(url);
-    const headers: any = {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-      "Accept": "text/html,application/xhtml+xml",
-    };
-    if (process.env.DARAZ_API_KEY) headers["x-api-key"] = process.env.DARAZ_API_KEY;
-    const res = await fetch(finalUrl, { headers, redirect: "follow" });
+    if (!url) {
+      return NextResponse.json({ success: false, error: "Link nahi hai" });
+    }
+
+    let finalUrl = url;
+    const cc = process.env.DARAZ_CC_CODE;
+    if (cc &&!url.includes("cc=")) {
+      finalUrl = url.includes("?")? url + "&cc=" + cc : url + "?cc=" + cc;
+    }
+
+    const res = await fetch(finalUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0",
+        "Accept": "text/html",
+      },
+    });
+
     const html = await res.text();
-    let name = ""; const titleMatch = html.match(/<title>(.*?)<\/title>/i);
-    if (titleMatch) name = titleMatch[1].split("|")[0].trim().replace(/Daraz.*$/i, "").trim();
-    let price = ""; const patterns = [/"price"\s*:\s*"?(\d+)"?/i, /"salePrice"[^0-9]*(\d{3,6})/i, /Rs\.\s*([\d,]+)/i, /"amount"\s*:\s*"?(\d+)"?/i, /currentPrice"\s*:\s*(\d+)/i];
-    for (let pat of patterns) { const m = html.match(pat); if (m) { price = m[1].replace(/,/g, ""); if (parseInt(price) > 50) break; } }
-    let original_price = price; let sale_price = price;
-    const origMatch = html.match(/"originalPrice"[^0-9]*(\d{3,6})/i);
-    if (origMatch) { original_price = origMatch[1]; sale_price = price; }
-    let image = ""; const imgMatch = html.match(/"image"\s*:\s*"(https:\/\/[^"]+)"/i) || html.match(/<meta property="og:image" content="([^"]+)"/i);
-    if (imgMatch) image = imgMatch[1];
-    let image_urls: string[] = []; const gal = html.match(/https:\/\/[^"]*alicdn\.com[^"]*\.jpg/gi);
-    if (gal) image_urls = [...new Set(gal)].slice(0, 4);
-    if (image && image_urls.indexOf(image) === -1) image_urls.unshift(image);
-    image_urls = image_urls.slice(0, 4);
-    if (!price) return NextResponse.json({ success: false, error: 'Price nahi mila, manual Rs. likh do' });
-    return NextResponse.json({ success: true, name: name || 'Daraz Product', price: parseInt(sale_price), original_price: parseInt(original_price), sale_price: parseInt(sale_price), image: image, image_urls: image_urls.length? image_urls : [image], affiliate_link: finalUrl });
-  } catch (e: any) { return NextResponse.json({ success: false, error: e.message || 'Error' }); }
+
+    let name = "";
+    const t = html.match(/<title>(.*?)<\/title>/i);
+    if (t) name = t[1].split("|")[0].trim();
+
+    let price = "";
+    const m1 = html.match(/"salePrice"[^0-9]*(\d{3,6})/i) || html.match(/"price"\s*:\s*"?(\d+)"?/i) || html.match(/Rs\.\s*([\d,]+)/i);
+    if (m1) price = m1[1].replace(/,/g, "");
+
+    let original_price = price;
+    let sale_price = price;
+    const m2 = html.match(/"originalPrice"[^0-9]*(\d{3,6})/i);
+    if (m2) {
+      original_price = m2[1];
+      sale_price = price;
+    }
+
+    let image = "";
+    const im = html.match(/"image"\s*:\s*"(https:\/\/[^"]+)"/i) || html.match(/<meta property="og:image" content="([^"]+)"/i);
+    if (im) image = im[1];
+
+    let image_urls: string[] = [];
+    const gal = html.match(/https:\/\/[^"]*alicdn\.com[^"]*\.jpg/gi);
+    if (gal) {
+      image_urls = Array.from(new Set(gal)).slice(0, 4);
+    }
+    if (image &&!image_urls.includes(image)) {
+      image_urls.unshift(image);
+    }
+
+    if (!price) {
+      return NextResponse.json({ success: false, error: "Price nahi mila" });
+    }
+
+    return NextResponse.json({
+      success: true,
+      name: name || "Daraz Product",
+      price: parseInt(sale_price),
+      original_price: parseInt(original_price),
+      sale_price: parseInt(sale_price),
+      image: image,
+      image_urls: image_urls.length? image_urls : [image],
+      affiliate_link: finalUrl,
+    });
+  } catch (err) {
+    const message = err instanceof Error? err.message : "Error";
+    return NextResponse.json({ success: false, error: message });
+  }
 }
