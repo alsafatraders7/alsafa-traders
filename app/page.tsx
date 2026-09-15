@@ -156,4 +156,39 @@ export default function Home() {
 
       {selected && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setSelected(null)}>
-          <div className="bg-white rounded-[20px]
+          <div className="bg-white rounded-[20px] max-w-[450px] w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <img src={selected.image_url} className="w-full h-[320px] object-cover rounded-t-[20px]" alt={selected.name} />
+            <div className="p-5">
+              <h2 className="text-[18px] font-black text-[#1A3C34]">{selected.name}</h2>
+              {(() => { const pr = getPrice(selected); return (
+                <p className="text-[13px] mt-1"><span className="line-through text-gray-400">Rs.{pr.original}</span> <b className="ml-2">Rs.{pr.current}</b> <span className="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full ml-2">-{pr.discount}% OFF</span></p>
+              )})()}
+              <p className="text-[13px] text-[#1A3C34]/80 mt-3">Premium quality - Daraz pe best price me available.</p>
+              <div className="mt-5 border-t pt-4">
+                <h4 className="font-bold text-sm">Customer Reviews ({reviews.length})</h4>
+                <div className="flex gap-1 my-2">
+                  {[1,2,3,4,5].map((s) => (
+                    <span key={s} onClick={() => setRating(s)} className={`text-2xl cursor-pointer ${s <= rating? "text-yellow-400" : "text-gray-300"}`}>★</span>
+                  ))}
+                </div>
+                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Aapka Naam" className="w-full border p-2 rounded-lg mb-2 text-sm" />
+                <textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Review likhein..." className="w-full border p-2 rounded-lg mb-2 text-sm" rows={3}></textarea>
+                <button onClick={submitReview} className="w-full bg-black text-white py-2.5 rounded-full font-bold text-sm">Review Submit Karo</button>
+                <div className="mt-3 space-y-2 max-h-40 overflow-auto">
+                  {reviews.map((r: any) => (
+                    <div key={r.id} className="bg-gray-50 p-2 rounded-lg">
+                      <p className="font-bold text-xs">{r.customer_name} - {r.rating} Stars</p>
+                      <p className="text-xs">{r.comment}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <a href={selected.affiliate_link} target="_blank" className="block w-full bg-[#FFD814] text-center font-black py-3 rounded-full mt-5 text-[14px]">Buy on Daraz</a>
+              <button onClick={() => setSelected(null)} className="block w-full text-center text-[12px] mt-3 text-gray-500">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
