@@ -59,8 +59,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#E8F5E9]">
-      {/* LAUNCH LINE ERASE - aapne bola hatani hai */}
-
       <header className="bg-[#1A3C34] p-3 flex items-center gap-3 sticky top-0 z-20">
         <div className="bg-[#FFC107] w-10 h-10 rounded-full flex items-center justify-center font-black">AS</div>
         <div className="text-white font-black leading-none">Al Safa<br />Traders.pk</div>
@@ -85,6 +83,21 @@ export default function Home() {
             <button onClick={() => setCat("Shop All")} className="bg-[#1A3C34] text-white px-6 py-3 rounded-full font-bold text-sm">Shop New Arrivals</button>
             <button onClick={() => setCat("Best Sellers")} className="bg-white px-6 py-3 rounded-full font-bold text-sm">Shop Best Sellers</button>
           </div>
+
+          {/* YE SUB FOOTER SE HERO ME - Email + Social hero me */}
+          <div className="mt-8 bg-white rounded-[18px] p-4 border">
+            <p className="text-sm font-bold text-center">Email: alsafatraders7@gmail.com</p>
+            <div className="flex justify-center gap-3 mt-3">
+              <span className="w-8 h-8 bg-black rounded-full flex items-center justify-center text-white text-xs">♪</span>
+              <span className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-xs">IG</span>
+              <span className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs">f</span>
+            </div>
+            <div className="flex flex-wrap justify-center gap-3 mt-3 text-[11px] font-bold">
+              <a href="https://www.facebook.com/61593603578150" target="_blank" className="underline">Facebook: Al Safa Traders</a>
+              <a href="https://www.tiktok.com/@alsafatraders.pk" target="_blank" className="underline">TikTok @alsafatraders.pk</a>
+              <a href="https://instagram.com/alsafatraders.pk" target="_blank" className="underline">Instagram</a>
+            </div>
+          </div>
         </div>
         <div className="bg-white rounded-[24px] overflow-hidden shadow-sm">
           <img src="https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=800" className="w-full h-[450px] object-cover" alt="" />
@@ -101,30 +114,19 @@ export default function Home() {
                 <div className="p-3">
                   <p className="font-bold text-sm line-clamp-1">{p.name}</p>
                   <p className="text-[11px] text-gray-500">{p.category}</p>
-                  <p className="font-black mt-1">Rs.{p.price_discounted || p.price || 1499} <span className="text-[11px] line-through text-gray-400 ml-1">Rs.{p.price_original || 2200}</span></p>
+                  <p className="font-black mt-1">Rs.{p.price_discounted || p.price || 1499}</p>
                 </div>
               </div>
               <div className="p-3 pt-0">
-                <a href={p.affiliate_link || "#"} target="_blank" onClick={(e) => e.stopPropagation()} className="block text-center bg-[#FFD814] py-2.5 rounded-full text-xs font-black">Buy on Daraz</a>
+                <a href={p.affiliate_link || "#"} target="_blank" onClick={(e) => e.stopPropagation()} className="block text-center bg-[#FFD814] py-2.5 rounded-full text-xs font-black">Buy on 【entity-Daraz¦canonical_name=Daraz】</a>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      <footer className="mt-10 bg-white p-6 text-center">
-        <p className="text-sm font-bold mb-3">Email: alsafatraders7@gmail.com</p>
-        <div className="flex justify-center gap-3 mb-3">
-          <span className="w-8 h-8 bg-black rounded-full flex items-center justify-center text-white text-xs">♪</span>
-          <span className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-xs">IG</span>
-          <span className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs">f</span>
-        </div>
-        <div className="flex flex-wrap justify-center gap-4 text-xs font-bold">
-          <a href="https://www.facebook.com/61593603578150" target="_blank" className="underline">Facebook: Al Safa Traders</a>
-          <a href="https://www.tiktok.com/@alsafatraders.pk" target="_blank" className="underline">TikTok @alsafatraders.pk</a>
-          <a href="https://instagram.com/alsafatraders.pk" target="_blank" className="underline">Instagram</a>
-        </div>
-        <p className="text-[10px] text-gray-400 mt-3">© 2026 Al Safa Traders.pk | Auto Price Sync: ON | Dynamic Cron: Active</p>
+      <footer className="mt-10 bg-white p-4 text-center">
+        <p className="text-[10px] text-gray-400">© 2026 Al Safa Traders.pk | Auto Price Sync: ON | Dynamic Cron: Active</p>
       </footer>
 
       {selected && (
@@ -134,8 +136,7 @@ export default function Home() {
             <div className="p-5">
               <h2 className="text-[18px] font-black text-[#1A3C34]">{selected.name}</h2>
               <p className="text-[11px] text-gray-500 mt-1">{selected.category} | Rs. {selected.price_discounted || selected.price}</p>
-              <p className="text-[13px] text-[#1A3C34]/80 mt-3">Premium quality - Ghar ke kaam asan banayen! 【entity-Daraz¦canonical_name=Daraz】 pe best price me available.</p>
-
+              <p className="text-[13px] text-[#1A3C34]/80 mt-3">Premium quality - Daraz pe best price me available.</p>
               <div className="mt-5 border-t pt-4">
                 <h4 className="font-bold text-sm">⭐ Customer Reviews ({reviews.length})</h4>
                 <div className="flex gap-1 my-2">
@@ -155,7 +156,6 @@ export default function Home() {
                   ))}
                 </div>
               </div>
-
               <a href={selected.affiliate_link} target="_blank" className="block w-full bg-[#FFD814] text-center font-black py-3 rounded-full mt-5 text-[14px]">Buy on Daraz</a>
               <button onClick={() => setSelected(null)} className="block w-full text-center text-[12px] mt-3 text-gray-500">Close</button>
             </div>
