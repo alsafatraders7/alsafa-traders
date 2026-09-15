@@ -1,15 +1,10 @@
 "use client"
 import { useState, useEffect } from "react"
-import { createClient } from "@supabase/supabase-js"
 
-const supabase: any = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-)
-
-export default function HomePage() {
+export default function Home() {
   const [products, setProducts] = useState<any[]>([])
-  const [wishlist, setWishlist] = useState<any[]>([])
+  const [search, setSearch] = useState("")
+  const [cat, setCat] = useState("Shop All")
   const [selected, setSelected] = useState<any>(null)
   const [reviews, setReviews] = useState<any[]>([])
   const [name, setName] = useState("")
@@ -17,121 +12,166 @@ export default function HomePage() {
   const [comment, setComment] = useState("")
 
   useEffect(() => {
-    supabase.from("products").select("*").order("id", { ascending: false }).then((res: any) => {
-      if (res.data) setProducts(res.data)
-    })
-    try { setWishlist(JSON.parse(localStorage.getItem("wishlist") || "[]")) } catch {}
+    const load = async () => {
+      try {
+        const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+        const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        if (!url ||!key) return
+        const { createClient } = await import("@supabase/supabase-js")
+        const supabase = createClient(url, key)
+        const { data } = await supabase.from("products").select("*").order("id", { ascending: false })
+        if (data) setProducts(data)
+      } catch {}
+    }
+    load()
   }, [])
 
   const loadReviews = async (id: number) => {
-    const { data } = await supabase.from("reviews").select("*").eq("product_id", id).order("created_at", { ascending: false })
-    if (data) setReviews(data)
+    try {
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      if (!url ||!key) return
+      const { createClient } = await import("@supabase/supabase-js")
+      const supabase = createClient(url, key)
+      const { data } = await supabase.from("reviews").select("*").eq("product_id", id).order("created_at", { ascending: false })
+      if (data) setReviews(data)
+    } catch {}
   }
 
   const submitReview = async () => {
     if (!name ||!comment) return alert("Naam aur review likho")
-    const { error } = await supabase.from("reviews").insert({ product_id: selected.id, customer_name: name, rating, comment })
-    if (!error) { alert("Review add ho gaya"); setName(""); setComment(""); loadReviews(selected.id) }
+    try {
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      if (!url ||!key) return
+      const { createClient } = await import("@supabase/supabase-js")
+      const supabase = createClient(url, key)
+      const { error } = await supabase.from("reviews").insert({ product_id: selected.id, customer_name: name, rating, comment })
+      if (!error) { alert("Review add ho gaya"); setName(""); setComment(""); loadReviews(selected.id) }
+      else alert(error.message)
+    } catch {}
   }
 
-  const toggleWishlist = (p: any) => {
-    let cur: any[] = []
-    try { cur = JSON.parse(localStorage.getItem("wishlist") || "[]") } catch { cur = [] }
-    if (cur.find((x: any) => x.id === p.id)) cur = cur.filter((x: any) => x.id!== p.id)
-    else cur.push(p)
-    localStorage.setItem("wishlist", JSON.stringify(cur))
-    setWishlist(cur)
-  }
+  const cats = ["Shop All", "Best Sellers", "Kitchen", "Bartan", "Storage & Organizers"]
+
+  const filtered = products.filter((p: any) => {
+    const s = p.name?.toLowerCase().includes(search.toLowerCase())
+    const c = cat === "Shop All"? true : cat === "Best Sellers"? p.is_best_seller : p.category === cat
+    return s && c
+  })
 
   return (
-    <main className="min-h-screen bg-[#E8F5E9]">
-      <div className="bg-[#E8F5E9] text-[#0A3327] text-[11px] font-bold tracking-widest text-center py-2 px-2">
+    <div className="min-h-screen bg-[#E8F5E9]">
+      <div className="bg-[#E8F5E9] text-[11px] text-center py-1.5 tracking-widest font-bold text-[#1A3C34]">
         LAUNCH - NEW ARRIVALS - FREE DELIVERY OVER RS.2000 - 16K+ HAPPY CUSTOMERS
       </div>
 
-      <header className="bg-[#0A3327] px-4 py-3">
-        <div className="flex items-center justify-between gap-3 max-w-6xl mx-auto">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-[#FFC107] rounded-full flex items-center justify-center font-black text-black">AS</div>
-            <span className="text-white font-bold leading-tight text-[16px]">Al Safa<br/>Traders.pk</span>
-          </div>
-          <div className="flex-1 max-w-[320px]">
-            <div className="bg-white rounded-full flex items-center px-4 py-2.5">
-              <span className="mr-2">🔍</span>
-              <input placeholder="Search chopper, storage," className="w-full outline-none text-sm placeholder:text-gray-400" />
-            </div>
-          </div>
-        </div>
-        <div className="flex gap-2 mt-4 overflow-auto max-w-6xl mx-auto">
-          <button className="bg-white text-black px-5 py-2 rounded-full font-bold text-sm whitespace-nowrap">Shop All</button>
-          <button className="text-white/70 px-5 py-2 rounded-full font-bold text-sm whitespace-nowrap">Best Sellers</button>
-          <button className="text-white/70 px-5 py-2 rounded-full font-bold text-sm whitespace-nowrap">Kitchen</button>
-          <button className="text-white/70 px-5 py-2 rounded-full font-bold text-sm whitespace-nowrap">Bartan</button>
+      <header className="bg-[#1A3C34] p-3 flex items-center gap-3 sticky top-0 z-20">
+        <div className="bg-[#FFC107] w-10 h-10 rounded-full flex items-center justify-center font-black">AS</div>
+        <div className="text-white font-black leading-none">Al Safa<br />Traders.pk</div>
+        <div className="flex-1 bg-white rounded-full px-4 py-2.5 flex items-center gap-2 ml-2">
+          <span>🔍</span>
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search chopper, storage," className="w-full outline-none text-sm bg-transparent" />
         </div>
       </header>
 
-      <section className="bg-[#E8F5E9] px-5 pt-6 pb-6 max-w-6xl mx-auto">
-        <p className="text-[#0A3327] font-bold text-[22px]">Welcome to Safa traders</p>
-        <h1 className="text-[#0A3327] font-black text-[36px] leading-[1.1] mt-2">
-          Everyday Kitchen Essentials for <span className="bg-[#FFEB3B] px-2">Smart</span> <span className="bg-[#FFEB3B] px-2">Homes</span>
-        </h1>
-        <p className="text-[#0A3327]/70 text-[15px] mt-4 leading-relaxed">
-          Ghar ke kaam asan banayen! Premium quality choppers, strainers, storage & organizers - jo har kitchen me chahiye.
-        </p>
-        <div className="flex gap-3 mt-6">
-          <button className="bg-[#0A3327] text-white px-6 py-3.5 rounded-full font-bold text-sm">Shop New Arrivals</button>
-          <button className="bg-white text-black px-6 py-3.5 rounded-full font-bold text-sm shadow-sm">Shop Best Sellers</button>
+      <div className="bg-[#1A3C34] flex gap-2 p-2 overflow-x-auto">
+        {cats.map((c) => (
+          <button key={c} onClick={() => setCat(c)} className={`${cat === c? "bg-white text-[#1A3C34]" : "text-white/70"} px-5 py-2 rounded-full text-sm font-bold shrink-0`}>
+            {c}
+          </button>
+        ))}
+      </div>
+
+      <main className="max-w-6xl mx-auto p-4 grid md:grid-cols-2 gap-6 items-start">
+        <div>
+          <h1 className="text-[26px] font-black text-[#1A3C34]">Welcome to Safa traders</h1>
+          <h2 className="text-[38px] font-black text-[#1A3C34] leading-[0.9] mt-2">
+            Everyday Kitchen<br />Essentials for <span className="bg-[#FFEB3B] px-2">Smart Homes</span>
+          </h2>
+          <p className="text-[#1A3C34]/80 mt-4 text-[15px]">
+            Ghar ke kaam asan banayen! Premium quality choppers, strainers, storage & organizers - jo har kitchen me chahiye.
+          </p>
+          <div className="flex gap-3 mt-6">
+            <button onClick={() => setCat("Shop All")} className="bg-[#1A3C34] text-white px-6 py-3 rounded-full font-bold text-sm">Shop New Arrivals</button>
+            <button onClick={() => setCat("Best Sellers")} className="bg-white px-6 py-3 rounded-full font-bold text-sm">Shop Best Sellers</button>
+          </div>
         </div>
-        <div className="mt-6 relative rounded-[24px] overflow-hidden">
-          <img src="https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=800" className="w-full h-[380px] object-cover" alt="kitchen" />
-          <div className="absolute bottom-4 right-4 w-14 h-14 bg-[#00C853] rounded-full flex items-center justify-center text-white text-2xl shadow-lg">💬</div>
+        <div className="bg-white rounded-[24px] overflow-hidden shadow-sm">
+          <img src="https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=800" className="w-full h-[450px] object-cover" alt="Kitchen" />
+        </div>
+      </main>
+
+      <section className="max-w-6xl mx-auto p-4 mt-6">
+        <h2 className="font-black text-[#1A3C34] text-xl">{cat} ({filtered.length})</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+          {filtered.map((p: any) => (
+            <div key={p.id} className="bg-white border rounded-[18px] overflow-hidden shadow-sm">
+              <div onClick={() => { setSelected(p); loadReviews(p.id) }} className="cursor-pointer">
+                <img src={p.image_url || "https://via.placeholder.com/400"} className="h-[190px] w-full object-cover" alt={p.name} />
+                <div className="p-3">
+                  <p className="font-bold text-sm line-clamp-1">{p.name}</p>
+                  <p className="text-[11px] text-gray-500">{p.category}</p>
+                  <p className="font-black mt-1">Rs.{p.price}</p>
+                </div>
+              </div>
+              <div className="p-3 pt-0">
+                <a href={p.affiliate_link || "#"} target="_blank" onClick={(e) => e.stopPropagation()} className="block text-center bg-[#FFD814] py-2.5 rounded-full text-xs font-black">
+                  Buy on Daraz
+                </a>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
-      <section className="bg-white p-3 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-6xl mx-auto rounded-t-[24px] -mt-2 pt-6">
-        {products.map((product: any) => (
-          <div key={product.id} className="border rounded-2xl overflow-hidden shadow-sm bg-white">
-            <div className="relative cursor-pointer" onClick={() => { setSelected(product); loadReviews(product.id) }}>
-              <img src={product.image_url} className="w-full h-[300px] object-cover" alt={product.name} />
-              <span className="absolute top-3 left-3 bg-orange-500 text-white text-[11px] font-bold px-3 py-1 rounded-full">-32% OFF</span>
-              <span className="absolute bottom-3 right-3 bg-white text-[11px] px-2 py-1 rounded-full shadow font-bold">Al Safa</span>
-            </div>
-            <div className="p-3">
-              <div className="flex items-center gap-2 text-[11px] text-gray-600">
-                <span>⭐ {product.rating || "4.8"} ({product.reviews_count || 127})</span>
-                <span className="text-red-500">● {product.live_views || 23} viewing</span>
-              </div>
-              <h3 className="font-bold text-[13px] mt-1 leading-tight line-clamp-2">{product.name}</h3>
-              <p className="text-[11px] text-gray-500 mt-1 line-clamp-2">
-                Ab sabziyan, pyaz, aloo aik jagah — neat & clean! Har side se asani se access. Wheels ke sath - Jahan chahen move karen. Strong & Space Saving.
-              </p>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="font-black text-sm">Rs.{product.price_discounted || 1499}</span>
-                <span className="text-[11px] line-through text-gray-400">Rs.{product.price_original || 2200}</span>
-                <span className="bg-red-100 text-red-600 text-[10px] px-2 py-0.5 rounded-full">-32%</span>
-              </div>
-              <div className="flex items-center justify-between mt-3 text-[12px]">
-                <button onClick={() => toggleWishlist(product)} className="flex items-center gap-1">
-                  {wishlist.find((x: any) => x.id === product.id)? "❤️ Wishlist" : "♡ Wishlist"}
-                </button>
-                <span className="text-gray-400">Bundle</span>
-              </div>
-              <a href={product.affiliate_link} target="_blank" rel="noopener noreferrer" className="mt-3 w-full bg-[#FFD814] hover:bg-[#F7CA00] text-black py-3 rounded-full font-bold text-center block text-[14px] border border-[#F2C200]">
-                Buy on Daraz
-              </a>
-            </div>
-          </div>
-        ))}
-      </section>
+      <footer className="mt-10 bg-white p-6 text-center">
+        <div className="flex flex-wrap justify-center gap-4 text-xs font-bold">
+          <a href="https://www.facebook.com/61593603578150" target="_blank" className="underline">Facebook: Al Safa Traders</a>
+          <a href="https://www.tiktok.com/@alsafatraders.pk" target="_blank" className="underline">TikTok @alsafatraders.pk</a>
+          <a href="https://instagram.com/alsafatraders.pk" target="_blank" className="underline">Instagram</a>
+          <a href="mailto:alsafatraders7@gmail.com" className="underline">Email: alsafatraders7@gmail.com</a>
+        </div>
+        <p className="text-[10px] text-gray-400 mt-3">© 2026 Al Safa Traders.pk | Auto Price Sync: ON | Dynamic Cron: Active</p>
+      </footer>
 
       {selected && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setSelected(null)}>
-          <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-auto p-4" onClick={(e) => e.stopPropagation()}>
-            <img src={selected.image_url} className="w-full h-72 object-cover rounded-xl" alt="" />
-            <h2 className="font-bold mt-3 text-sm">{selected.name}</h2>
-            <p className="text-sm mt-1">Rs.{selected.price_original} <b>Rs.{selected.price_discounted}</b></p>
-            <div className="mt-4 border-t pt-3">
-              <h4 className="font-bold text-sm">⭐ Customer Reviews ({reviews.length}) - 5 Star</h4>
-              <div className="flex gap-1 my-2">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <span key={s} onClick={() => setRating(s)}
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setSelected(null)}>
+          <div className="bg-white rounded-[20px] max-w-[450px] w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <img src={selected.image_url} className="w-full h-[320px] object-cover rounded-t-[20px]" alt="" />
+            <div className="p-5">
+              <h2 className="text-[18px] font-black text-[#1A3C34]">{selected.name}</h2>
+              <p className="text-[11px] text-gray-500 mt-1">{selected.category} | Rs. {selected.price}</p>
+              <p className="text-[13px] text-[#1A3C34]/80 mt-3">Premium quality - Ghar ke kaam asan banayen! 【entity-Daraz¦canonical_name=Daraz】 pe best price me available.</p>
+
+              <div className="mt-5 border-t pt-4">
+                <h4 className="font-bold text-sm">⭐ Customer Reviews ({reviews.length}) - 5 Star</h4>
+                <div className="flex gap-1 my-2">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <span key={s} onClick={() => setRating(s)} className={`text-2xl cursor-pointer ${s <= rating? "text-yellow-400" : "text-gray-300"}`}>★</span>
+                  ))}
+                </div>
+                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Aapka Naam" className="w-full border p-2 rounded-lg mb-2 text-sm" />
+                <textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Apna 5 star review likhein..." className="w-full border p-2 rounded-lg mb-2 text-sm" rows={3}></textarea>
+                <button onClick={submitReview} className="w-full bg-black text-white py-2.5 rounded-full font-bold text-sm">Review Submit Karo</button>
+                <div className="mt-3 space-y-2 max-h-40 overflow-auto">
+                  {reviews.map((r: any) => (
+                    <div key={r.id} className="bg-gray-50 p-2 rounded-lg">
+                      <p className="font-bold text-xs">{r.customer_name} — <span className="text-yellow-500">{"★".repeat(r.rating)}</span></p>
+                      <p className="text-xs">{r.comment}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <a href={selected.affiliate_link} target="_blank" className="block w-full bg-[#FFD814] text-center font-black py-3 rounded-full mt-5 text-[14px]">
+                Buy on Daraz
+              </a>
+              <button onClick={() => setSelected(null)} className="block w-full text-center text-[12px] mt-3 text-gray-500">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
