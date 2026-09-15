@@ -6,10 +6,6 @@ export default function Home() {
   const [search, setSearch] = useState("")
   const [cat, setCat] = useState("Shop All")
   const [selected, setSelected] = useState<any>(null)
-  const [reviews, setReviews] = useState<any[]>([])
-  const [name, setName] = useState("")
-  const [rating, setRating] = useState(5)
-  const [comment, setComment] = useState("")
 
   useEffect(() => {
     const load = async () => {
@@ -26,38 +22,12 @@ export default function Home() {
     load()
   }, [])
 
-  const loadReviews = async (id: number) => {
-    try {
-      const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-      const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-      if (!url ||!key) return
-      const { createClient } = await import("@supabase/supabase-js")
-      const supabase = createClient(url, key)
-      const { data } = await supabase.from("reviews").select("*").eq("product_id", id).order("created_at", { ascending: false })
-      if (data) setReviews(data)
-    } catch {}
-  }
-
-  const submitReview = async () => {
-    if (!name ||!comment) return alert("Naam aur review likho")
-    try {
-      const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-      const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-      if (!url ||!key) return
-      const { createClient } = await import("@supabase/supabase-js")
-      const supabase = createClient(url, key)
-      const { error } = await supabase.from("reviews").insert({ product_id: selected.id, customer_name: name, rating, comment })
-      if (!error) { alert("Review add ho gaya"); setName(""); setComment(""); loadReviews(selected.id) }
-      else alert(error.message)
-    } catch {}
-  }
-
   const cats = ["Shop All", "Best Sellers", "Kitchen", "Bartan", "Storage & Organizers"]
 
   const filtered = products.filter((p: any) => {
-    const s = p.name?.toLowerCase().includes(search.toLowerCase())
-    const c = cat === "Shop All"? true : cat === "Best Sellers"? p.is_best_seller : p.category === cat
-    return s && c
+    const matchesSearch =!search || p.name?.toLowerCase()?.includes(search.toLowerCase())
+    const matchesCat = cat === "Shop All"? true : cat === "Best Sellers"? p.is_best_seller : p.category === cat
+    return matchesSearch && matchesCat
   })
 
   return (
@@ -107,7 +77,7 @@ export default function Home() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
           {filtered.map((p: any) => (
             <div key={p.id} className="bg-white border rounded-[18px] overflow-hidden shadow-sm">
-              <div onClick={() => { setSelected(p); loadReviews(p.id) }} className="cursor-pointer">
+              <div onClick={() => setSelected(p)} className="cursor-pointer">
                 <img src={p.image_url || "https://via.placeholder.com/400"} className="h-[190px] w-full object-cover" alt={p.name} />
                 <div className="p-3">
                   <p className="font-bold text-sm line-clamp-1">{p.name}</p>
@@ -117,7 +87,7 @@ export default function Home() {
               </div>
               <div className="p-3 pt-0">
                 <a href={p.affiliate_link || "#"} target="_blank" onClick={(e) => e.stopPropagation()} className="block text-center bg-[#FFD814] py-2.5 rounded-full text-xs font-black">
-                  Buy on Daraz
+                  Buy on 【entity-Daraz¦canonical_name=Daraz】
                 </a>
               </div>
             </div>
@@ -132,7 +102,6 @@ export default function Home() {
           <a href="https://instagram.com/alsafatraders.pk" target="_blank" className="underline">Instagram</a>
           <a href="mailto:alsafatraders7@gmail.com" className="underline">Email: alsafatraders7@gmail.com</a>
         </div>
-        <p className="text-[10px] text-gray-400 mt-3">© 2026 Al Safa Traders.pk | Auto Price Sync: ON | Dynamic Cron: Active</p>
       </footer>
 
       {selected && (
@@ -143,27 +112,6 @@ export default function Home() {
               <h2 className="text-[18px] font-black text-[#1A3C34]">{selected.name}</h2>
               <p className="text-[11px] text-gray-500 mt-1">{selected.category} | Rs. {selected.price}</p>
               <p className="text-[13px] text-[#1A3C34]/80 mt-3">Premium quality - Ghar ke kaam asan banayen! 【entity-Daraz¦canonical_name=Daraz】 pe best price me available.</p>
-
-              <div className="mt-5 border-t pt-4">
-                <h4 className="font-bold text-sm">⭐ Customer Reviews ({reviews.length}) - 5 Star</h4>
-                <div className="flex gap-1 my-2">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <span key={s} onClick={() => setRating(s)} className={`text-2xl cursor-pointer ${s <= rating? "text-yellow-400" : "text-gray-300"}`}>★</span>
-                  ))}
-                </div>
-                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Aapka Naam" className="w-full border p-2 rounded-lg mb-2 text-sm" />
-                <textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Apna 5 star review likhein..." className="w-full border p-2 rounded-lg mb-2 text-sm" rows={3}></textarea>
-                <button onClick={submitReview} className="w-full bg-black text-white py-2.5 rounded-full font-bold text-sm">Review Submit Karo</button>
-                <div className="mt-3 space-y-2 max-h-40 overflow-auto">
-                  {reviews.map((r: any) => (
-                    <div key={r.id} className="bg-gray-50 p-2 rounded-lg">
-                      <p className="font-bold text-xs">{r.customer_name} — <span className="text-yellow-500">{"★".repeat(r.rating)}</span></p>
-                      <p className="text-xs">{r.comment}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
               <a href={selected.affiliate_link} target="_blank" className="block w-full bg-[#FFD814] text-center font-black py-3 rounded-full mt-5 text-[14px]">
                 Buy on Daraz
               </a>
