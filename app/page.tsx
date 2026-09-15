@@ -1,6 +1,13 @@
 "use client"
 import { useState, useEffect } from "react"
 
+function getPrice(p: any) {
+  const current = p?.price_discounted || p?.price || 1499
+  const original = p?.price_original || 2200
+  const discount = original > current? Math.round(((original - current) / original) * 100) : 32
+  return { current, original, discount }
+}
+
 export default function Home() {
   const [products, setProducts] = useState<any[]>([])
   const [search, setSearch] = useState("")
@@ -117,14 +124,20 @@ export default function Home() {
       <section className="max-w-6xl mx-auto p-4 mt-6">
         <h2 className="font-black text-[#1A3C34] text-xl">{cat} ({filtered.length})</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-          {filtered.map((p: any) => (
+          {filtered.map((p: any) => {
+            const price = getPrice(p)
+            return (
             <div key={p.id} className="bg-white border rounded-[18px] overflow-hidden shadow-sm">
               <div onClick={() => { setSelected(p); loadReviews(p.id) }} className="cursor-pointer">
                 <img src={p.image_url || "https://via.placeholder.com/400"} className="h-[190px] w-full object-cover" alt={p.name} />
                 <div className="p-3">
                   <p className="font-bold text-sm line-clamp-1">{p.name}</p>
                   <p className="text-[11px] text-gray-500">{p.category}</p>
-                  <p className="font-black mt-1">Rs.{p.price_discounted || p.price || 1499}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs line-through text-gray-400">Rs.{price.original}</span>
+                    <span className="font-black">Rs.{price.current}</span>
+                    <span className="bg-red-100 text-red-600 text-[10px] px-2 py-0.5 rounded-full">-{price.discount}%</span>
+                  </div>
                 </div>
               </div>
               <div className="p-3 pt-0">
@@ -133,7 +146,7 @@ export default function Home() {
                 </a>
               </div>
             </div>
-          ))}
+          )})}
         </div>
       </section>
 
@@ -147,7 +160,9 @@ export default function Home() {
             <img src={selected.image_url} className="w-full h-[320px] object-cover rounded-t-[20px]" alt={selected.name} />
             <div className="p-5">
               <h2 className="text-[18px] font-black text-[#1A3C34]">{selected.name}</h2>
-              <p className="text-[11px] text-gray-500 mt-1">{selected.category} | Rs. {selected.price_discounted || selected.price}</p>
+              {(() => { const pr = getPrice(selected); return (
+                <p className="text-[13px] mt-1"><span className="line-through text-gray-400">Rs.{pr.original}</span> <b className="ml-2">Rs.{pr.current}</b> <span className="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full ml-2">-{pr.discount}% OFF</span></p>
+              )})()}
               <p className="text-[13px] text-[#1A3C34]/80 mt-3">Premium quality - Daraz pe best price me available.</p>
               <div className="mt-5 border-t pt-4">
                 <h4 className="font-bold text-sm">Customer Reviews ({reviews.length})</h4>
