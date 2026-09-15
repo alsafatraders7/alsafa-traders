@@ -58,15 +58,15 @@ export default function HomePage() {
           <div className="flex-1 max-w-[320px]">
             <div className="bg-white rounded-full flex items-center px-4 py-2.5">
               <span className="mr-2">🔍</span>
-              <input placeholder="Search chopper, storage," className="w-full outline-none text-sm" />
+              <input placeholder="Search chopper, storage," className="w-full outline-none text-sm placeholder:text-gray-400" />
             </div>
           </div>
         </div>
         <div className="flex gap-2 mt-4 overflow-auto max-w-6xl mx-auto">
-          <button className="bg-white text-black px-5 py-2 rounded-full font-bold text-sm">Shop All</button>
-          <button className="text-white/70 px-5 py-2 rounded-full font-bold text-sm">Best Sellers</button>
-          <button className="text-white/70 px-5 py-2 rounded-full font-bold text-sm">Kitchen</button>
-          <button className="text-white/70 px-5 py-2 rounded-full font-bold text-sm">Bartan</button>
+          <button className="bg-white text-black px-5 py-2 rounded-full font-bold text-sm whitespace-nowrap">Shop All</button>
+          <button className="text-white/70 px-5 py-2 rounded-full font-bold text-sm whitespace-nowrap">Best Sellers</button>
+          <button className="text-white/70 px-5 py-2 rounded-full font-bold text-sm whitespace-nowrap">Kitchen</button>
+          <button className="text-white/70 px-5 py-2 rounded-full font-bold text-sm whitespace-nowrap">Bartan</button>
         </div>
       </header>
 
@@ -83,8 +83,8 @@ export default function HomePage() {
           <button className="bg-white text-black px-6 py-3.5 rounded-full font-bold text-sm shadow-sm">Shop Best Sellers</button>
         </div>
         <div className="mt-6 relative rounded-[24px] overflow-hidden">
-          <img src="https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=800" className="w-full h-[380px] object-cover" alt="" />
-          <div className="absolute bottom-4 right-4 w-14 h-14 bg-[#00C853] rounded-full flex items-center justify-center">💬</div>
+          <img src="https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=800" className="w-full h-[380px] object-cover" alt="kitchen" />
+          <div className="absolute bottom-4 right-4 w-14 h-14 bg-[#00C853] rounded-full flex items-center justify-center text-white text-2xl shadow-lg">💬</div>
         </div>
       </section>
 
@@ -92,24 +92,31 @@ export default function HomePage() {
         {products.map((product: any) => (
           <div key={product.id} className="border rounded-2xl overflow-hidden shadow-sm bg-white">
             <div className="relative cursor-pointer" onClick={() => { setSelected(product); loadReviews(product.id) }}>
-              <img src={product.image_url} className="w-full h-[300px] object-cover" alt="" />
+              <img src={product.image_url} className="w-full h-[300px] object-cover" alt={product.name} />
               <span className="absolute top-3 left-3 bg-orange-500 text-white text-[11px] font-bold px-3 py-1 rounded-full">-32% OFF</span>
+              <span className="absolute bottom-3 right-3 bg-white text-[11px] px-2 py-1 rounded-full shadow font-bold">Al Safa</span>
             </div>
             <div className="p-3">
               <div className="flex items-center gap-2 text-[11px] text-gray-600">
                 <span>⭐ {product.rating || "4.8"} ({product.reviews_count || 127})</span>
                 <span className="text-red-500">● {product.live_views || 23} viewing</span>
               </div>
-              <h3 className="font-bold text-[13px] mt-1">{product.name}</h3>
+              <h3 className="font-bold text-[13px] mt-1 leading-tight line-clamp-2">{product.name}</h3>
+              <p className="text-[11px] text-gray-500 mt-1 line-clamp-2">
+                Ab sabziyan, pyaz, aloo aik jagah — neat & clean! Har side se asani se access. Wheels ke sath - Jahan chahen move karen. Strong & Space Saving.
+              </p>
               <div className="flex items-center gap-2 mt-2">
                 <span className="font-black text-sm">Rs.{product.price_discounted || 1499}</span>
                 <span className="text-[11px] line-through text-gray-400">Rs.{product.price_original || 2200}</span>
+                <span className="bg-red-100 text-red-600 text-[10px] px-2 py-0.5 rounded-full">-32%</span>
               </div>
-              <div className="flex justify-between mt-3 text-[12px]">
-                <button onClick={() => toggleWishlist(product)}>{wishlist.find((x: any) => x.id === product.id)? "❤️ Wishlist" : "♡ Wishlist"}</button>
+              <div className="flex items-center justify-between mt-3 text-[12px]">
+                <button onClick={() => toggleWishlist(product)} className="flex items-center gap-1">
+                  {wishlist.find((x: any) => x.id === product.id)? "❤️ Wishlist" : "♡ Wishlist"}
+                </button>
                 <span className="text-gray-400">Bundle</span>
               </div>
-              <a href={product.affiliate_link} target="_blank" className="mt-3 w-full bg-[#FFD814] text-black py-3 rounded-full font-bold text-center block text-[14px] border border-[#F2C200]">
+              <a href={product.affiliate_link} target="_blank" rel="noopener noreferrer" className="mt-3 w-full bg-[#FFD814] hover:bg-[#F7CA00] text-black py-3 rounded-full font-bold text-center block text-[14px] border border-[#F2C200]">
                 Buy on Daraz
               </a>
             </div>
@@ -120,4 +127,11 @@ export default function HomePage() {
       {selected && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setSelected(null)}>
           <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-auto p-4" onClick={(e) => e.stopPropagation()}>
-            <img src={selected.image_url} className="w-full h-
+            <img src={selected.image_url} className="w-full h-72 object-cover rounded-xl" alt="" />
+            <h2 className="font-bold mt-3 text-sm">{selected.name}</h2>
+            <p className="text-sm mt-1">Rs.{selected.price_original} <b>Rs.{selected.price_discounted}</b></p>
+            <div className="mt-4 border-t pt-3">
+              <h4 className="font-bold text-sm">⭐ Customer Reviews ({reviews.length}) - 5 Star</h4>
+              <div className="flex gap-1 my-2">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <span key={s} onClick={() => setRating(s)}
