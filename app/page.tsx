@@ -38,11 +38,11 @@ function ReviewsBox({ productId }: { productId: number }) {
     const { error } = await supabase.from("reviews").insert({ product_id: productId, customer_name: name, rating, comment })
     setLoading(false)
     if (!error) {
-      alert("Shukriya! Aapka 5 star review add ho gaya ⭐")
+      alert("Shukriya! Aapka review add ho gaya")
       setName(""); setComment(""); setRating(5)
       loadReviews()
     } else {
-      alert("Error: "+error.message)
+      alert(error.message)
     }
   }
 
@@ -57,7 +57,6 @@ function ReviewsBox({ productId }: { productId: number }) {
       <input value={name} onChange={e=>setName(e.target.value)} placeholder="Aapka Naam" className="w-full border p-2 rounded-lg mb-2 text-sm" />
       <textarea value={comment} onChange={e=>setComment(e.target.value)} placeholder="Apna review likhein..." className="w-full border p-2 rounded-lg mb-2 text-sm" rows={2}></textarea>
       <button onClick={submitReview} disabled={loading} className="w-full bg-black text-white py-2 rounded-full text-sm font-bold">{loading? "..." : "Review Submit Karo"}</button>
-
       <div className="mt-3 space-y-2 max-h-40 overflow-auto">
         {reviews.map(r=>(
           <div key={r.id} className="bg-gray-50 p-2 rounded-lg">
@@ -65,7 +64,7 @@ function ReviewsBox({ productId }: { productId: number }) {
             <p className="text-xs">{r.comment}</p>
           </div>
         ))}
-        {reviews.length===0 && <p className="text-xs text-gray-400">Abhi koi review nahi — pehla review aap likhein!</p>}
+        {reviews.length===0 && <p className="text-xs text-gray-400">Abhi koi review nahi — pehla aap likhein!</p>}
       </div>
     </div>
   )
@@ -100,7 +99,6 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-white">
-      {/* Hero */}
       <section className="p-6 text-center">
         <h1 className="text-4xl font-black">Everyday Kitchen Essentials for</h1>
         <p className="text-gray-600 mt-2">Ghar ke kaam asan banayen! Premium quality organizers - jo har kitchen me chahiye.</p>
@@ -121,12 +119,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Products */}
       <section className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl mx-auto">
         {products.map((product) => (
           <div key={product.id} className="border rounded-2xl overflow-hidden shadow-sm">
             <div className="relative cursor-pointer" onClick={()=>setSelectedProduct(product)}>
-              <img src={product.image_url} className="w-full h-72 object-cover" />
+              <img src={product.image_url} className="w-full h-72 object-cover" alt={product.name} />
               <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">-32% OFF</span>
               <span className="absolute bottom-2 right-2 bg-white text-xs px-2 py-1 rounded shadow">Al Safa</span>
             </div>
@@ -147,30 +144,28 @@ export default function HomePage() {
                 <span className="text-xs ml-auto">Bundle</span>
               </div>
               <a href={product.affiliate_link} target="_blank" className="mt-3 w-full bg-yellow-400 hover:bg-yellow-500 text-black py-2.5 rounded-full font-bold text-center block text-sm">
-                Buy on Daraz
+                Buy on 【entity-Daraz¦canonical_name=Daraz】
               </a>
             </div>
           </div>
         ))}
       </section>
 
-      {/* Product Modal with Reviews */}
       {selectedProduct && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center p-4" onClick={()=>setSelectedProduct(null)}>
           <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-auto p-4" onClick={e=>e.stopPropagation()}>
-            <img src={selectedProduct.image_url} className="w-full h-64 object-cover rounded-xl"/>
+            <img src={selectedProduct.image_url} className="w-full h-64 object-cover rounded-xl" alt="" />
             <h2 className="font-bold mt-3">{selectedProduct.name}</h2>
             <p className="text-sm">Rs.{selectedProduct.price_original} <b>Rs.{selectedProduct.price_discounted}</b></p>
             <ReviewsBox productId={selectedProduct.id} />
             <div className="mt-3 flex gap-2">
-              <a href={selectedProduct.affiliate_link} target="_blank" className="flex-1 bg-yellow-400 text-center py-2 rounded-full font-bold">Buy on Daraz</a>
-              <button onClick={()=>setSelectedProduct(null)} className="flex-1 border py-2 rounded-full">Close</button>
+              <a href={selectedProduct.affiliate_link} target="_blank" className="flex-1 bg-yellow-400 text-center py-2 rounded-full font-bold text-sm">Buy on 【entity-Daraz¦canonical_name=Daraz】</a>
+              <button onClick={()=>setSelectedProduct(null)} className="flex-1 border py-2 rounded-full text-sm">Close</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* FOOTER - EMAIL FIXED ABOVE SOCIAL */}
       <footer className="mt-12 border-t pt-6 pb-10 text-center">
         <div className="space-y-3">
           <p className="text-sm font-semibold">Email: alsafatraders7@gmail.com</p>
