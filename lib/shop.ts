@@ -26,7 +26,7 @@ export function getShopLink(link: string) {
 }
 
 export function getShopText() {
-  return "Buy Now"
+  return "Buy on Daraz"
 }
 
 export function getPrice(p: any) {
