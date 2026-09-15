@@ -1,63 +1,42 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server"
+import { createClient } from "@supabase/supabase-js"
+export const dynamic = "force-dynamic"
 
-export async function POST(req: Request) {
+async function getDarazPrice(url: string) {
   try {
-    const body = await req.json();
-    const url = body.url;
-    if (!url) {
-      return NextResponse.json({ success: false, error: 'Link nahi hai' });
-    }
-
     const res = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'text/html,application/xhtml+xml'
-      },
-      redirect: 'follow',
-    });
+      headers: { "User-Agent": "Mozilla/5.0" },
+      cache: "no-store"
+    })
+    const html = await res.text()
+    let cur = 0, org = 0
+    const s = html.match(/"salePrice"[^}]*"text"\s*:\s*"Rs\.\s*([\d,]+)"/)
+    const o = html.match(/"originalPrice"[^}]*"text"\s*:\s*"Rs\.\s*([\d,]+)"/)
+    if (s) cur = parseInt(s[1].replace(/,/g, ""))
+    if (o) org = parseInt(o[1].replace(/,/g, ""))
+    return { cur, org }
+  } catch { return { cur: 0, org: 0 } }
+}
 
-    const html = await res.text();
-
-    let name = '';
-    const titleMatch = html.match(/<title>(.*?)<\/title>/i);
-    if (titleMatch) {
-      name = titleMatch[1].split('|')[0].trim().replace(/Daraz.*$/i, '').trim();
+export async function GET() {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+  const { data } = await supabase.from("products").select("*")
+  let upd = 0
+  for (const p of data as any[]) {
+    const dUrl = p.daraz_source_url
+    if (!dUrl) continue
+    const { cur, org } = await getDarazPrice(dUrl)
+    if (cur > 0) {
+      await supabase.from("products").update({
+        price_discounted: cur,
+        price_original: org || cur + 500,
+        last_synced: new Date().toISOString()
+      }).eq("id", p.id)
+      upd++
     }
-
-    let price = '';
-    const patterns = [
-      /"price"\s*:\s*"?(\d+)"?/i,
-      /"salePrice"[^0-9]*(\d{3,6})/i,
-      /Rs\.\s*([\d,]+)/i,
-      /"amount"\s*:\s*"?(\d+)"?/i,
-      /currentPrice"\s*:\s*(\d+)/i
-    ];
-
-    for (let pat of patterns) {
-      const m = html.match(pat);
-      if (m) {
-        price = m[1].replace(/,/g, '');
-        if (parseInt(price) > 50) break;
-      }
-    }
-
-    let image = '';
-    const imgMatch = html.match(/"image"\s*:\s*"(https:\/\/[^"]+)"/i) || html.match(/<meta property="og:image" content="([^"]+)"/i);
-    if (imgMatch) image = imgMatch[1];
-
-    if (!price) {
-      return NextResponse.json({ success: false, error: 'Price nahi mila, manual Rs. likh do' });
-    }
-
-    return NextResponse.json({
-      success: true,
-      name: name || 'Daraz Product',
-      price: parseInt(price),
-      image: image,
-      affiliate_link: url
-    });
-
-  } catch (e: any) {
-    return NextResponse.json({ success: false, error: e.message || 'Error' });
   }
+  return NextResponse.json({ success: true, updated: upd })
 }
