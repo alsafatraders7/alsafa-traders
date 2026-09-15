@@ -11,7 +11,7 @@ export function getPrice(p: any) {
   }
 }
 export function getImages(p: any) {
-  const arr: any[] = []
+  const arr: any[] = [],
   if (p?.image_url) arr.push(p.image_url)
   if (p?.image_url2) arr.push(p.image_url2)
   if (p?.image_url3) arr.push(p.image_url3)
