@@ -1,12 +1,12 @@
-// lib/shop.ts - shop link + price + reviews
+// lib/shop.ts - tag se bachne ka final fix
 export function getShopLink(link: string) {
   return link || "#"
 }
 
 export function getShopText() {
-  const part1 = String.fromCharCode(68,97)
-  const part2 = String.fromCharCode(114,97,122)
-  return "Buy on " + part1 + part2
+  // 【entity-Daraz¦canonical_name=Daraz】 word ko tod ke banaya, tag nahi banega, lekin screen pe sahi dikhega
+  const d = String.fromCharCode(68,97,114,97,122)
+  return `Buy on ${d}`
 }
 
 export function getPrice(p: any) {
@@ -16,16 +16,13 @@ export function getPrice(p: any) {
   }
 }
 
-export async function getProductReviews(productId: number) {
-  try {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    if (!url ||!key) return []
-    const { createClient } = await import("@supabase/supabase-js")
-    const supabase = createClient(url, key)
-    const { data } = await supabase.from("reviews").select("*").eq("product_id", productId).order("created_at", { ascending: false })
-    return data || []
-  } catch {
-    return []
-  }
+export function getImages(p: any): string[] {
+  // 4 images capacity: image_url + image_urls array
+  const arr: string[] = []
+  if (p.image_url) arr.push(p.image_url)
+  if (p.image_urls && Array.isArray(p.image_urls)) arr.push(...p.image_urls)
+  if (p.image_url2) arr.push(p.image_url2)
+  if (p.image_url3) arr.push(p.image_url3)
+  if (p.image_url4) arr.push(p.image_url4)
+  return [...new Set(arr)].slice(0, 4)
 }
