@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react"
 
 function getPrice(p: any) {
-  const current = p?.price_discounted || p?.price || 1499
-  const original = p?.price_original || 2200
+  const current = p?.price || p?.price_discounted || 1499
+  const original = p?.price_original || p?.price || 2200
   const discount = original > current ? Math.round(((original - current) / original) * 100) : 32
   return { current, original, discount }
 }
