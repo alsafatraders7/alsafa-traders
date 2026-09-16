@@ -30,7 +30,7 @@ export default function PendingPage() {
       image: p.image_url,
       daraz_link: p.daraz_link,
       category: p.category,
-      is_stealth: true
+      
     });
     await supabase.from('pending_products').update({ status: 'approved' }).eq('id', p.id);
      alert(`Approved! ${p.product_name} - LIVE at Rs.${p.daraz_price}`);
