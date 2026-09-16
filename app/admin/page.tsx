@@ -61,15 +61,23 @@ export default function AdminPage(){
 
   const addCategory=async()=>{if(!newCatName.trim())return;const slug=newCatName.toLowerCase().replace(/[^a-z0-9]+/g,'-');await supabase.from('categories').insert([{name:newCatName.trim(),slug}]);await supabase.from('nav_buttons').insert([{label:newCatName.trim(),slug,type:'category',active:true,order_index:0}]);setNewCatName('');fetchCategories();};
   const deleteCategory=async(slug:string)=>{if(!confirm('Delete?'))return;await supabase.from('categories').delete().eq('slug',slug);await supabase.from('nav_buttons').delete().eq('slug',slug);fetchCategories();};
+const handleLogin=async(e:any)=>{e.preventDefault();setAuthLoading(true);setAuthError('');const {error}=await supabase.auth.signInWithPassword({email,password});if(error)setAuthError(error.message);setAuthLoading(false);};
 
-  const handleLogin=async(e:any)=>{e.preventDefault();setAuthLoading(true);setAuthError('');const {error}=await supabase.auth.signInWithPassword({email,password});if(error){setAuthError(error.message);setAuthLoading(false);}else{setIsAuthenticated(true);setAuthLoading(false);}};
+const handleSave=async(e:any)=>{
+e.preventDefault();
+const toCC=(u:string)=>{ if(!u) return ''; try{ return u.split('?')[0].split('&')[0]+'?cc'; }catch{ return u; } };
+const extraDesc = `${form.detail} || IMG2:${form.image_url2} || IMG3:${form.image_url3} || IMG4:${form.image_url4} || FOMO:${form.fomo_text} || FAKE:${form.fake_views}|${form.fake_sold} || TIMER:${form.timer_hours} || BUNDLE:${form.bundle_text}`;
+const payload={name:form.name,price:parseFloat(form.price),category:form.category,image_url:form.image_url,affiliate_link:toCC(form.affiliate_link),description:extraDesc,is_best_seller:form.is_best_seller,is_featured:form.is_featured,is_active:true,display_theme:form.display_theme};
+if(editingProduct){await supabase.from('products').update(payload).eq('id',editingProduct.id);}
+else{const slug=form.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now();await supabase.from('products').insert([{...payload,slug}]);}
+setShowAddForm(false);setEditingProduct(null);setForm({name:'',price:'',category:'',image_url:'',image_url2:'',image_url3:'',image_url4:'',detail:'',affiliate_link:'',fomo_text:'Only 5 Left!',fake_views:'128',fake_sold:'45',timer_hours:'2',bundle_text:'Buy 2 Get 10% OFF',is_best_seller:false,is_featured:false,is_active:true,display_theme:'default'});
+};
+  
 
-  const handleSave=async(e:any)=>{
-    e.preventDefault();
-    const payload={name:form.name,price:parseFloat(form.price),category:form.category,image_url:form.image_url,affiliate_link:form.affiliate_link,is_best_seller:form.is_best_seller,is_featured:form.is_featured,is_active:true,display_theme:form.display_theme};
-    if(editingProduct){await supabase.from('products').update(payload).eq('id',editingProduct.id);}
-    else{const slug=form.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now();await supabase.from('products').insert([{...payload,slug}]);}
-    setShowAddForm(false);setEditingProduct(null);setForm({name:'',price:'',category:'',image_url:'',affiliate_link:'',is_best_seller:false,is_featured:false,is_active:true,display_theme:'default'});fetchProducts();
+  
+    
+    
+
   };
 
   const handleEdit=(p:any)=>{setEditingProduct(p);setForm({name:p.name,price:String(p.price),category:p.category,image_url:p.image_url,affiliate_link:p.affiliate_link,is_best_seller:p.is_best_seller||false,is_featured:p.is_featured||false,is_active:true,display_theme:p.display_theme||'default'});setShowAddForm(true);};
