@@ -41,7 +41,7 @@ export default function AdminPage(){
     const {error}=await supabase.storage.from('product-images').upload(fileName,file);
     if(error){alert('Storage Public ON karo: '+error.message);setImageUploading(false);return;}
     const {data}=supabase.storage.from('product-images').getPublicUrl(fileName);
-    setForm(f=>({...f,image_url:data.publicUrl}));
+    setForm((f:any)=>({...f,[key]:data.publicUrl}));
     setImageUploading(false);
   };
 
