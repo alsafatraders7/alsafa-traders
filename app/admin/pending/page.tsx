@@ -43,7 +43,7 @@ export default function PendingPage() {
   };
 
   const fetchDaraz = async () => {
-    const res = await fetch('/api/fetch-【entity-daraz¦canonical_name=Daraz】');
+    const res = await fetch('/api/fetch-daraz');
     const d = await res.json();
     alert(d.message);
     load();
