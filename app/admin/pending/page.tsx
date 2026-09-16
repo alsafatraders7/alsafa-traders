@@ -21,8 +21,8 @@ export default function PendingPage() {
   useEffect(() => { load(); }, []);
 
   const approve = async (p: any) => {
-    // Stealth Profit: Daraz Price + 30% = Aap ka Price
-    const myPrice = Math.round(p.daraz_price * 1.3);
+    // Same Daraz Price - No Extra Profit
+    const myPrice = p.daraz_price;
     await supabase.from('products').insert({
       name: p.product_name,
       price: myPrice,
@@ -33,7 +33,7 @@ export default function PendingPage() {
       is_stealth: true
     });
     await supabase.from('pending_products').update({ status: 'approved' }).eq('id', p.id);
-    alert(`Approved! ${p.product_name} - Profit: Rs.${myPrice - p.daraz_price}`);
+     alert(`Approved! ${p.product_name} - LIVE at Rs.${p.daraz_price}`);
     load();
   };
 
@@ -63,7 +63,7 @@ export default function PendingPage() {
               <div style={{ flex: 1 }}>
                 <p style={{ fontWeight: 'bold' }}>{p.product_name}</p>
                 <p>【entity-Daraz¦canonical_name=Daraz】: Rs.{p.daraz_price} | Category: {p.category}</p>
-                <p style={{ fontSize: '12px', color: 'green' }}>My Price (30% Profit): Rs.{Math.round(p.daraz_price * 1.3)}</p>
+                Daraz Price: Rs.{p.daraz_price}
                 <div style={{ marginTop: '10px' }}>
                   <button onClick={() => approve(p)} style={{ padding: '6px 15px', background: 'green', color: 'white', borderRadius: '5px', marginRight: '10px' }}>Approve + Add Profit</button>
                   <button onClick={() => reject(p.id)} style={{ padding: '6px 15px', background: 'red', color: 'white', borderRadius: '5px' }}>Reject</button>
