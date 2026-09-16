@@ -52,26 +52,24 @@ export default function AdminPage(){
     setForm((f:any)=>({...f,[key]:data.publicUrl}));
     setImageUploading(false);
   };
-
-  const handleFetchDaraz=async()=>{
-    if(!form.affiliate_link) return alert('Link dalo');
-    setDarazFetching(true);
-    try{
-      const res=await fetch('/api/【entity-daraz¦canonical_name=Daraz】-price',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:form.affiliate_link})});
-      const d=await res.json();
-      if(d.success && d.price){setForm(f=>({...f,name:d.name||f.name,price:String(d.price),image_url:d.image||f.image_url}));alert('【entity-Daraz¦canonical_name=Daraz】 Connected Rs.'+d.price);}
-      else alert('Manual price likh do');
-    }catch{alert('Error');}
-    setDarazFetching(false);
-  };
-
+const handleFetchDaraz=async()=>{
+  if(!form.affiliate_link) return alert('Link dalo');
+  setDarazFetching(true);
+  try{
+    const res=await fetch('/api/daraz-price',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:form.affiliate_link})});
+    const d=await res.json();
+    if(d.success && d.price){setForm(f=>({...f,name:d.name||f.name,price:String(d.price),image_url:d.image||f.image_url}));alert('Price mil gaya: Rs.'+d.price);}
+    else alert('Manual price likh do');
+  }catch{alert('Error');}
+  setDarazFetching(false);
+};
   const addCategory=async()=>{if(!newCatName.trim())return;const slug=newCatName.toLowerCase().replace(/[^a-z0-9]+/g,'-');await supabase.from('categories').insert([{name:newCatName.trim(),slug}]);await supabase.from('nav_buttons').insert([{label:newCatName.trim(),slug,type:'category',active:true,order_index:0}]);setNewCatName('');fetchCategories();};
   const deleteCategory=async(slug:string)=>{if(!confirm('Delete?'))return;await supabase.from('categories').delete().eq('slug',slug);await supabase.from('nav_buttons').delete().eq('slug',slug);fetchCategories();};
   const handleLogin=async(e:any)=>{e.preventDefault();setAuthLoading(true);setAuthError('');const {error}=await supabase.auth.signInWithPassword({email,password});if(error){setAuthError(error.message);setAuthLoading(false);}else{setIsAuthenticated(true);setAuthLoading(false);}};
 
   const handleSave=async(e:any)=>{
     e.preventDefault();
-    const toCC=(u:string)=>{ if(!u) return ''; try{ return u.split('?')[0].split('&')[0]+'?cc'; }catch{ return u; } };
+    const toCC=(u:string)=>{ if(!u) return ''; try{ return u.includes('?cc=')?u:u+(u.includes('?')?'&':'?')+'cc'; }catch{ return u; } };
     const extraDesc = `${form.detail} || IMG2:${form.image_url2} || IMG3:${form.image_url3} || IMG4:${form.image_url4} || FOMO:${form.fomo_text} || FAKE:${form.fake_views}|${form.fake_sold} || TIMER:${form.timer_hours} || BUNDLE:${form.bundle_text}`;
     const payload={name:form.name,price:parseFloat(form.price),category:form.category,image_url:form.image_url,affiliate_link:toCC(form.affiliate_link),description:extraDesc,is_best_seller:form.is_best_seller,is_featured:form.is_featured,is_active:true,display_theme:form.display_theme};
     if(editingProduct){await supabase.from('products').update(payload).eq('id',editingProduct.id);}
