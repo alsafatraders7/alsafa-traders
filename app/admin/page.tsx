@@ -27,7 +27,7 @@ export default function AdminPage(){
   const [newCatName,setNewCatName]=useState('');
   const [imageUploading,setImageUploading]=useState(false);
   const [darazFetching,setDarazFetching]=useState(false);
-  const [form,setForm]=useState({name:'',price:'',category:'',image_url:'',affiliate_link:'',is_best_seller:false,is_featured:false,is_active:true,display_theme:'default'});
+  const [form,setForm]=useState({name:'',price:'',category:'',image_url:'',image_url2:'',image_url3:'',image_url4:'',detail:'',affiliate_link:'',fomo_text:'Only 5 Left!',fake_views:'128',fake_sold:'45',timer_hours:'2',bundle_text:'Buy 2 Get 10% OFF',is_best_seller:false,is_featured:false,is_active:true,display_theme:'default'});
 
   useEffect(()=>{const init=async()=>{const {data}=await supabase.auth.getSession();if(data.session){setIsAuthenticated(true);setEmail(data.session.user.email||'');}setCheckingAuth(false);};init();const {data:lis}=supabase.auth.onAuthStateChange((_e,s)=>{setIsAuthenticated(!!s);if(s?.user?.email)setEmail(s.user.email);});return()=>lis.subscription.unsubscribe();},[]);
   useEffect(()=>{if(isAuthenticated){fetchProducts();fetchCategories();}},[isAuthenticated]);
