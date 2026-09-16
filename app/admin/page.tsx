@@ -27,10 +27,10 @@ export default function AdminPage(){
   const [newCatName,setNewCatName]=useState('');
   const [imageUploading,setImageUploading]=useState(false);
   const [darazFetching,setDarazFetching]=useState(false);
-  const [form,setForm]=useState({name:'',price:'',category:'',image_url:'',image_url2:'',image_url3:'',image_url4:'',detail:'',affiliate_link:'',is_best_seller:false,is_featured:false,is_active:true,display_theme:'default'});
+  const [form, setForm] = useState({name:'',price:'',category:'',image_url:'',image_url2:'',image_url3:'',image_url4:'',detail:'',affiliate_link:'',is_best_seller:false,display_theme:'default'});
 
   useEffect(()=>{const init=async()=>{const {data}=await supabase.auth.getSession();if(data.session){setIsAuthenticated(true);setEmail(data.session.user.email||'');}setCheckingAuth(false);};init();const {data:lis}=supabase.auth.onAuthStateChange((_e,s)=>{setIsAuthenticated(!!s);if(s?.user?.email)setEmail(s.user.email);});return()=>lis.subscription.unsubscribe();},[]);
-  useEffect(()=>{if(isAuthenticated){fetchProducts();fetchCategories();}},[isAuthenticated]);
+  useEffect(()=>{if(isAuthenticated){fetchProducts();fetchCategories();}},[isAuthenticated];
 
   const fetchProducts=async()=>{setLoading(true);const {data}=await supabase.from('products').select('*').order('created_at',{ascending:false}).limit(100);if(data)setProducts(data);setLoading(false);};
   const fetchCategories=async()=>{const {data}=await supabase.from('categories').select('*').order('name');if(data)setCategoriesList(data);};
