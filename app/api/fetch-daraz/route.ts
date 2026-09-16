@@ -3,65 +3,47 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  { auth: { persistSession: false } }
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-// AAP KI CATEGORIES - Yahan apni 【entity-Daraz¦canonical_name=Daraz】 Search Links lagao
-const CATEGORIES_MAP: any = {
-  "Kitchen": "kitchen gadgets",
-  "Bartan": "kitchen crockery bartan set",
-  "Storage & Organizers": "kitchen storage organizer box",
-  "Best Sellers": "best selling kitchen tools"
+// AAP KI WEBSITE CATEGORIES - 【entity-Daraz¦canonical_name=Daraz】 Query ke sath
+const CATEGORIES = {
+  "Kitchen": "kitchen gadgets tools",
+  "Bartan": "bartan crockery set",
+  "Storage & Organizers": "kitchen storage organizer",
+  "Best Sellers": "kitchen best seller",
+  "Shop All": "home kitchen"
 };
 
 export async function GET() {
   try {
-    let totalAdded = 0;
-    let totalSkipped = 0;
+    let allNewProducts: any[] = [];
+    let skipped = 0;
 
-    // Har Category ke liye Daraz se products lao
-    for (const [ourCategory, darazQuery] of Object.entries(CATEGORIES_MAP)) {
-      
-      // Daraz ka unofficial search API
-      const url = `https://www.daraz.pk/catalog/?q=${encodeURIComponent(darazQuery as string)}&page=1`;
-      
-      const res = await fetch(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0',
-          'Accept': 'text/html'
-        }
-      });
-      
-      // NOTE: Yahan aap ka purana scraping logic chalega
-      // Main logic: product ka naam, price, image, link nikalo
-      // Ye example ke liye dummy hai - Aap ke purane code se products nikalna hai
-      
-      // ----- START: Aap ke purane code ka scraping part yahan ayega -----
-      // let products = scrapeDaraz(url); // aap ka function
-      
-      // For now, we will just check existing pending table se
-      // Agar aap ke paas pehle se scraping API hai to usko loop me use karo
-    }
-
-    // DUPLICATE FIX - Jo pehle se hai usko dobara add mat karo
-    const { data: existingProducts } = await supabase.from('products').select('daraz_link');
+    // 1. Pehle se konse links hain - Duplicate rokne ke liye
+    const { data: existingProd } = await supabase.from('products').select('daraz_link');
     const { data: existingPending } = await supabase.from('pending_products').select('daraz_link');
-    
-    const allLinks = new Set([
-      ...(existingProducts || []).map((p: any) => p.daraz_link?.replace('?cc','').replace('&cc','')),
-      ...(existingPending || []).map((p: any) => p.daraz_link?.replace('?cc','').replace('&cc',''))
+
+    const existingLinks = new Set([
+     ...(existingProd || []).map((p: any) => (p.daraz_link || '').split('?')[0].split('&')[0]),
+     ...(existingPending || []).map((p: any) => (p.daraz_link || '').split('?')[0].split('&')[0])
     ]);
 
-    // Example: Agar aap ka fetch logic products de raha hai
-    // To check: if (allLinks.has(newProduct.daraz_link)) skip
-    
-    return NextResponse.json({ 
-      message: `Auto Sync Done! Category wise system active hai. Ab duplicate nahi ayegi. ${totalAdded} new, ${totalSkipped} skipped`,
-      categories: Object.keys(CATEGORIES_MAP)
-    });
+    // 2. Har Category se 【entity-Daraz¦canonical_name=Daraz】 se products lao (Sample - 5 products per category)
+    // Yahan aap Daraz scraping lagate hain - Abhi main structure de raha hun
+    // Aap manually bhi products add kar sakte ho ya Daraz API use karo
 
-  } catch (e: any) {
-    return NextResponse.json({ message: "Error: " + e.message }, { status: 500 });
-  }
-}
+    for (const [category, query] of Object.entries(CATEGORIES)) {
+      // Daraz Search URL
+      const searchUrl = `https://www.daraz.pk/tag/${encodeURIComponent(query)}/`;
+
+      // TODO: Yahan se scraping hogi - Filhal dummy products rokne ke liye
+      // Aap ka purana logic yahan ayega
+
+      // Example product (aap isko apne scraping se replace karoge)
+      // const fetched = await fetchDarazProducts(query);
+
+      // Abhi ke liye hum pending me kuch nahi daal rahe - sirf duplicate system ready hai
+    }
+
+    // 3. MANUAL ADD ke liye - Agar aap ke paas Daraz link hai to auto?cc lag j
