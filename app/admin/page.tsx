@@ -80,7 +80,7 @@ setShowAddForm(false);setEditingProduct(null);setForm({name:'',price:'',category
 
   };
 
-  const handleEdit=(p:any)=>{setEditingProduct(p);setForm({name:p.name,price:String(p.price),category:p.category,image_url:p.image_url,affiliate_link:p.affiliate_link,is_best_seller:p.is_best_seller||false,is_featured:p.is_featured||false,is_active:true,display_theme:p.display_theme||'default'});setShowAddForm(true);};
+  const handleEdit=(p:any)=>{setEditingProduct(p);const d=p.description||'';const get=(k:string)=>{const m=d.match(new RegExp(k+':([^|]+)'));return m?m[1].trim():'';};const detailOnly=d.split('||')[0]||'';setForm({name:p.name,price:String(p.price),category:p.category,image_url:p.image_url||'',image_url2:get('IMG2'),image_url3:get('IMG3'),image_url4:get('IMG4'),detail:detailOnly,affiliate_link:p.affiliate_link||'',fomo_text:get('FOMO')||'Only 5 Left!',fake_views:get('FAKE')?.split('|')[0]||'128',fake_sold:get('FAKE')?.split('|')[1]||'45',timer_hours:get('TIMER')||'2',bundle_text:get('BUNDLE')||'Buy 2 Get 10% OFF',is_best_seller:p.is_best_seller,is_featured:p.is_featured,is_active:true,display_theme:p.display_theme||'default'});setShowAddForm(true);};
   const handleDelete=async(id:string)=>{if(!confirm('Delete?'))return;await supabase.from('products').delete().eq('id',id);fetchProducts();};
   const handleAutoUpdate=async(p:any)=>{
     setUpdatingId(p.id);
