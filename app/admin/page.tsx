@@ -27,17 +27,19 @@ export default function AdminPage(){
   const [newCatName,setNewCatName]=useState('');
   const [imageUploading,setImageUploading]=useState(false);
   const [darazFetching,setDarazFetching]=useState(false);
-  const [form, setForm] = useState({name:'',price:'',category:'',image_url:'',image_url2:'',image_url3:'',image_url4:'',detail:'',affiliate_link:'',is_best_seller:false,display_theme:'default'});
 
-  useEffect(()=>{const init=async()=>{const {data}=await supabase.auth.getSession();if(data.session){setIsAuthenticated(true);setEmail(data.session.user.email||'');}setCheckingAuth(false);};init();const {data:lis}=supabase.auth.onAuthStateChange((_e,s)=>{setIsAuthenticated(!!s);if(s?.user?.email)setEmail(s.user.email);});return()=>lis.subscription.unsubscribe();},[]);
-  useEffect(()=>{if(isAuthenticated){fetchProducts();fetchCategories();}},[isAuthenticated];
+  const emptyForm = {name:'',price:'',category:'',image_url:'',image_url2:'',image_url3:'',image_url4:'',detail:'',affiliate_link:'',fomo_text:'Only 5 Left!',fake_views:'128',fake_sold:'45',timer_hours:'2',bundle_text:'Buy 2 Get 10% OFF',is_best_seller:false,is_featured:false,is_active:true,display_theme:'default'};
+  const [form, setForm] = useState(emptyForm);
+
+  useEffect(()=>{const init=async()=>{const {data}=await supabase.auth.getSession();if(data.session){setIsAuthenticated(true);setEmail(data.session.user.email||'');}setCheckingAuth(false);};init();const {data:lis}=supabase.auth.onAuthStateChange((_e,[STRIPPED]if(s?.user?.email)setEmail(s.user.email);});return()=>lis.subscription.unsubscribe();},[]);
+  useEffect(()=>{if(isAuthenticated){fetchProducts();fetchCategories();}},[isAuthenticated]);
 
   const fetchProducts=async()=>{setLoading(true);const {data}=await supabase.from('products').select('*').order('created_at',{ascending:false}).limit(100);if(data)setProducts(data);setLoading(false);};
   const fetchCategories=async()=>{const {data}=await supabase.from('categories').select('*').order('name');if(data)setCategoriesList(data);};
 
   const handleImageUpload=async(e:any, key='image_url')=>{
     const file=e.target.files[0]; if(!file) return; setImageUploading(true);
-    const fileName=`${Date.now()}-${file.name}`;
+    const fileName=`${Date.now()}-${file.name}`.replace(/\s+/g,'-');
     const {error}=await supabase.storage.from('product-images').upload(fileName,file);
     if(error){alert('Storage Public ON karo: '+error.message);setImageUploading(false);return;}
     const {data}=supabase.storage.from('product-images').getPublicUrl(fileName);
@@ -46,14 +48,14 @@ export default function AdminPage(){
   };
 
   const handleFetchDaraz=async()=>{
-    if(!form.affiliate_link) return alert('Pehle s.daraz.pk?cc wala link dalo');
+    if(!form.affiliate_link) return alert('Pehle s.【entity-daraz¦canonical_name=Daraz】.pk?cc wala link dalo');
     setDarazFetching(true);
     try{
-      const res=await fetch('/api/daraz-price',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:form.affiliate_link})});
+      const res=await fetch('/api/【entity-daraz¦canonical_name=Daraz】-price',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:form.affiliate_link})});
       const d=await res.json();
       if(d.success && d.price){
         setForm(f=>({...f,name:d.name||f.name,price:String(d.price),image_url:d.image||f.image_url}));
-        alert('Daraz Connected! Rs.'+d.price);
+        alert('【entity-Daraz¦canonical_name=Daraz】 Connected! Rs.'+d.price);
       }else alert('Manual Rs likh do -?cc safe');
     }catch{alert('Error - Manual price likh do');}
     setDarazFetching(false);
@@ -61,31 +63,52 @@ export default function AdminPage(){
 
   const addCategory=async()=>{if(!newCatName.trim())return;const slug=newCatName.toLowerCase().replace(/[^a-z0-9]+/g,'-');await supabase.from('categories').insert([{name:newCatName.trim(),slug}]);await supabase.from('nav_buttons').insert([{label:newCatName.trim(),slug,type:'category',active:true,order_index:0}]);setNewCatName('');fetchCategories();};
   const deleteCategory=async(slug:string)=>{if(!confirm('Delete?'))return;await supabase.from('categories').delete().eq('slug',slug);await supabase.from('nav_buttons').delete().eq('slug',slug);fetchCategories();};
-const handleLogin=async(e:any)=>{e.preventDefault();setAuthLoading(true);setAuthError('');const {error}=await supabase.auth.signInWithPassword({email,password});if(error)setAuthError(error.message);setAuthLoading(false);};
+  const handleLogin=async(e:any)=>{e.preventDefault();setAuthLoading(true);setAuthError('');const {error}=await supabase.auth.signInWithPassword({email,password});if(error)setAuthError(error.message);setAuthLoading(false);};
 
-const handleSave=async(e:any)=>{
-e.preventDefault();
-const toCC=(u:string)=>{ if(!u) return ''; try{ return u.split('?')[0].split('&')[0]+'?cc'; }catch{ return u; } };
-const extraDesc = `${form.detail} || IMG2:${form.image_url2} || IMG3:${form.image_url3} || IMG4:${form.image_url4} || FOMO:${form.fomo_text} || FAKE:${form.fake_views}|${form.fake_sold} || TIMER:${form.timer_hours} || BUNDLE:${form.bundle_text}`;
-const payload={name:form.name,price:parseFloat(form.price),category:form.category,image_url:form.image_url,affiliate_link:toCC(form.affiliate_link),description:extraDesc,is_best_seller:form.is_best_seller,is_featured:form.is_featured,is_active:true,display_theme:form.display_theme};
-if(editingProduct){await supabase.from('products').update(payload).eq('id',editingProduct.id);}
-else{const slug=form.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now();await supabase.from('products').insert([{...payload,slug}]);}
-setShowAddForm(false);setEditingProduct(null);setForm({name:'',price:'',category:'',image_url:'',image_url2:'',image_url3:'',image_url4:'',detail:'',affiliate_link:'',fomo_text:'Only 5 Left!',fake_views:'128',fake_sold:'45',timer_hours:'2',bundle_text:'Buy 2 Get 10% OFF',is_best_seller:false,is_featured:false,is_active:true,display_theme:'default'});
-};
-  
-
-  
-    
-    
-
+  const handleSave=async(e:any)=>{
+    e.preventDefault();
+    const toCC=(u:string)=>{ if(!u) return ''; try{ return u.split('?')[0].split('&')[0]+'?cc'; }catch{ return u; } };
+    const extraDesc = `${form.detail} || IMG2:${form.image_url2} || IMG3:${form.image_url3} || IMG4:${form.image_url4} || FOMO:${form.fomo_text} || FAKE:${form.fake_views}|${form.fake_sold} || TIMER:${form.timer_hours} || BUNDLE:${form.bundle_text}`;
+    const payload={name:form.name,price:parseFloat(form.price),category:form.category,image_url:form.image_url,affiliate_link:toCC(form.affiliate_link),description:extraDesc,is_best_seller:form.is_best_seller,is_featured:form.is_featured,is_active:true,display_theme:form.display_theme};
+    if(editingProduct){await supabase.from('products').update(payload).eq('id',editingProduct.id);}
+    else{const slug=form.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now();await supabase.from('products').insert([{...payload,slug}]);}
+    setShowAddForm(false);setEditingProduct(null);setForm(emptyForm);fetchProducts();
   };
 
-  const handleEdit=(p:any)=>{setEditingProduct(p);const d=p.description||'';const get=(k:string)=>{const m=d.match(new RegExp(k+':([^|]+)'));return m?m[1].trim():'';};const detailOnly=d.split('||')[0]||'';setForm({name:p.name,price:String(p.price),category:p.category,image_url:p.image_url||'',image_url2:get('IMG2'),image_url3:get('IMG3'),image_url4:get('IMG4'),detail:detailOnly,affiliate_link:p.affiliate_link||'',fomo_text:get('FOMO')||'Only 5 Left!',fake_views:get('FAKE')?.split('|')[0]||'128',fake_sold:get('FAKE')?.split('|')[1]||'45',timer_hours:get('TIMER')||'2',bundle_text:get('BUNDLE')||'Buy 2 Get 10% OFF',is_best_seller:p.is_best_seller,is_featured:p.is_featured,is_active:true,display_theme:p.display_theme||'default'});setShowAddForm(true);};
+  const handleEdit=(p:any)=>{
+    setEditingProduct(p);
+    const d=p.description||'';
+    const get=(k:string)=>{const m=d.match(new RegExp(k+':([^|]+)'));return m?m[1].trim():'';};
+    const detailOnly=d.split('||')[0]||'';
+    setForm({
+      name:p.name,
+      price:String(p.price),
+      category:p.category,
+      image_url:p.image_url||'',
+      image_url2:get('IMG2'),
+      image_url3:get('IMG3'),
+      image_url4:get('IMG4'),
+      detail:detailOnly,
+      affiliate_link:p.affiliate_link||'',
+      fomo_text:get('FOMO')||'Only 5 Left!',
+      fake_views:get('FAKE')?.split('|')[0]||'128',
+      fake_sold:get('FAKE')?.split('|')[1]||'45',
+      timer_hours:get('TIMER')||'2',
+      bundle_text:get('BUNDLE')||'Buy 2 Get 10% OFF',
+      is_best_seller:p.is_best_seller,
+      is_featured:p.is_featured,
+      is_active:true,
+      display_theme:p.display_theme||'default'
+    });
+    setShowAddForm(true);
+  };
+
   const handleDelete=async(id:string)=>{if(!confirm('Delete?'))return;await supabase.from('products').delete().eq('id',id);fetchProducts();};
+
   const handleAutoUpdate=async(p:any)=>{
     setUpdatingId(p.id);
     try{
-      const res=await fetch('/api/daraz-price',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:p.affiliate_link})});
+      const res=await fetch('/api/【entity-daraz¦canonical_name=Daraz】-price',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:p.affiliate_link})});
       const data=await res.json();
       if(data.success&&confirm('New Rs.'+data.price+' Old Rs.'+p.price)){await supabase.from('products').update({price:data.price}).eq('id',p.id);fetchProducts();}
       else alert(data.error||'Not found');
@@ -121,13 +144,13 @@ setShowAddForm(false);setEditingProduct(null);setForm({name:'',price:'',category
       <div className="flex-1 lg:ml-[260px]">
         <div className="bg-white border-b px-4 lg:px-6 py-3 flex items-center justify-between sticky top-0 z-20">
           <div className="flex items-center gap-3 flex-1"><button onClick={()=>setMobileMenu(true)} className="lg:hidden text-[22px]">☰</button><input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="Search products, theme..." className="bg-[#f8f9f6] border rounded-lg px-4 py-2 w-full max-w-[350px] text-[13px]"/></div>
-          <div className="flex items-center gap-2"><button onClick={()=>setActiveTab(activeTab==='dashboard'?'buttons':'dashboard')} className="border px-3 py-2 rounded-lg text-[11px] font-bold">{activeTab==='dashboard'?'Button Controls':'Dashboard'}</button><button onClick={()=>{setEditingProduct(null);setForm({name:'',price:'',category:'',image_url:'',affiliate_link:'',is_best_seller:false,is_featured:false,is_active:true,display_theme:'default'});setShowAddForm(true);}} className="bg-[#c49a4b] text-black px-4 py-2 rounded-lg text-[12px] font-bold">+ Add Product</button></div>
+          <div className="flex items-center gap-2"><button onClick={()=>setActiveTab(activeTab==='dashboard'?'buttons':'dashboard')} className="border px-3 py-2 rounded-lg text-[11px] font-bold">{activeTab==='dashboard'?'Button Controls':'Dashboard'}</button><button onClick={()=>{setEditingProduct(null);setForm(emptyForm);setShowAddForm(true);}} className="bg-[#c49a4b] text-black px-4 py-2 rounded-lg text-[12px] font-bold">+ Add Product</button></div>
         </div>
         <div className="p-3 lg:p-6">
           {activeTab==='buttons'?(
             <div className="bg-white rounded-xl p-5 border">
-              <h2 className="font-bold text-[16px]">Public Page Ke Sare Controls - Admin Se - Daraz Total Connect</h2>
-              <p className="text-[11px] text-gray-500">Yahan se Shop All | Bartan | Crockery | Electronics | Kids | Kitchen | Storage wale buttons control honge - Daraz?cc Safe</p>
+              <h2 className="font-bold text-[16px]">Public Page Ke Sare Controls - Admin Se - 【entity-Daraz¦canonical_name=Daraz】 Total Connect</h2>
+              <p className="text-[11px] text-gray-500">Yahan se Shop All | Bartan | Crockery | Electronics | Kids | Kitchen | Storage wale buttons control honge - 【entity-Daraz¦canonical_name=Daraz】?cc Safe</p>
               <div className="flex gap-2 mt-4"><input value={newCatName} onChange={e=>setNewCatName(e.target.value)} placeholder="Nayi Category - Jaise Toys" className="flex-1 border rounded-xl px-4 py-2.5"/><button onClick={addCategory} className="bg-black text-white px-5 rounded-xl font-bold">+ Add Button</button></div>
               <div className="grid grid-cols-2 gap-2 mt-4">{categoriesList.map((c:any)=>(<div key={c.slug} className="flex justify-between border rounded-xl p-3"><span>{c.name}</span><button onClick={()=>deleteCategory(c.slug)} className="text-red-500 text-[11px]">Delete</button></div>))}{categoriesList.length===0&&categories.map((cat:string)=>(<div key={cat} className="flex justify-between border rounded-xl p-3"><span>{cat}</span><span className="text-[10px] text-gray-400">from products</span></div>))}</div>
             </div>
@@ -135,7 +158,7 @@ setShowAddForm(false);setEditingProduct(null);setForm({name:'',price:'',category
             <>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
                 <div className="lg:col-span-2 bg-gradient-to-r from-[#fdf6e3] to-[#f5e6c8] rounded-xl p-5 flex justify-between items-center border">
-                  <div><h1 className="text-[22px] font-bold">Welcome Back, Admin! 100% Done</h1><p className="text-[12px] text-gray-600 mt-1">Daraz Total Connected: {form.display_theme} | Featured: {featured.length} | Best: {bestSellers.length} | Public Controls Active</p><div className="flex gap-2 mt-4"><a href="https://alsafatraders.pk" target="_blank" className="bg-[#0f2e26] text-white px-4 py-2 rounded-lg text-[12px]">View Website</a><span className="bg-[#c49a4b] text-black px-4 py-2 rounded-lg text-[12px] font-bold">100% Working</span></div></div>
+                  <div><h1 className="text-[22px] font-bold">Welcome Back, Admin! 100% Done</h1><p className="text-[12px] text-gray-600 mt-1">【entity-Daraz¦canonical_name=Daraz】 Total Connected: {form.display_theme} | Featured: {featured.length} | Best: {bestSellers.length} | Public Controls Active</p><div className="flex gap-2 mt-4"><a href="https://alsafatraders.pk" target="_blank" className="bg-[#0f2e26] text-white px-4 py-2 rounded-lg text-[12px]">View Website</a><span className="bg-[#c49a4b] text-black px-4 py-2 rounded-lg text-[12px] font-bold">100% Working</span></div></div>
                   <img src="https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=200" className="w-[140px] h-[100px] object-cover rounded-xl hidden md:block" alt=""/>
                 </div>
                 <div className="grid grid-cols-1 gap-4">
@@ -179,20 +202,19 @@ setShowAddForm(false);setEditingProduct(null);setForm({name:'',price:'',category
             <form onSubmit={handleSave} className="space-y-3">
               <input required placeholder="Product Name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px]"/>
               <div className="grid grid-cols-2 gap-2"><input required type="number" placeholder="Price - Daraz Auto (Rs. PKR)" value={form.price} onChange={e=>setForm({...form,price:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px]"/><select required value={form.category} onChange={e=>setForm({...form,category:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px] bg-yellow-50 font-bold"><option value="">Category - Public Control</option>{categoriesList.map((c:any)=><option key={c.slug} value={c.name}>{c.name}</option>)}{categories.map((c:string)=><option key={c} value={c}>{c}</option>)}<option value="Kitchen">Kitchen</option><option value="Bartan">Bartan</option><option value="Storage">Storage</option></select></div>
-              <div className="p-3 border rounded-lg bg-gray-50"><label className="text-[11px] font-bold">Gallery Se Upload - Public Control</label><input type="file" accept="image/*" onChange={handleImageUpload} className="w-full mt-1 text-[12px]"/>{imageUploading&&<p className="text-[10px] text-blue-600">Uploading...</p>}<input required placeholder="Image URL" value={form.image_url} onChange={e=>setForm({...form,image_url:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px] mt-2 bg-white"/>{form.image_url&&<img src={form.image_url} className="w-20 h-20 rounded-lg mt-2 object-cover border" alt=""/>}</div>
-              <div className="flex gap-2"><input required placeholder="Affiliate Link s.daraz.pk?cc Safe" value={form.affiliate_link} onChange={e=>setForm({...form,affiliate_link:e.target.value})} className="flex-1 border rounded-lg px-3 py-2.5 text-[13px] border-orange-300"/><button type="button" onClick={handleFetchDaraz} disabled={darazFetching} className="bg-black text-white px-3 rounded-lg text-[11px] font-bold">{darazFetching?'...':'Daraz Auto'}</button></div>
+              <div className="p-3 border rounded-lg bg-gray-50"><label className="text-[11px] font-bold">Gallery Se Upload - Public Control</label><input type="file" accept="image/*" onChange={(e:any)=>handleImageUpload(e,'image_url')} className="w-full mt-1 text-[12px]"/>{imageUploading&&<p className="text-[10px] text-blue-600">Uploading...</p>}<input required placeholder="Image URL" value={form.image_url} onChange={e=>setForm({...form,image_url:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px] mt-2 bg-white"/>{form.image_url&&<img src={form.image_url} className="w-20 h-20 rounded-lg mt-2 object-cover border" alt=""/>}</div>
+              <div className="flex gap-2"><input required placeholder="Affiliate Link s.daraz.pk?cc Safe" value={form.affiliate_link} onChange={e=>setForm({...form,affiliate_link:e.target.value})} className="flex-1 border rounded-lg px-3 py-2.5 text-[13px] border-orange-300"/><button type="button" onClick={handleFetchDaraz} disabled={darazFetching} className="bg-black text-white px-3 rounded-lg text-[11px] font-bold">{darazFetching?'...':'【entity-Daraz¦canonical_name=Daraz】 Auto'}</button></div>
               <p className="text-[10px] text-gray-500">Auto dabao to Name/Price/Image auto -?cc safe rahega - Public pe update hoga! Manual Rs. PKR bhi likh sakte ho</p>
               <select value={form.display_theme} onChange={e=>setForm({...form,display_theme:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px]"><option value="default">Display Theme - Default - Public</option><option value="featured">Featured Highlight - Public</option><option value="minimal">Minimal - Public</option><option value="premium">Premium - Public</option></select>
-      <input value={form.image_url2} onChange={(e)=>setForm({...form,image_url2:e.target.value})} placeholder="Image 2 URL" className="w-full border rounded-lg px-3 py-2.5 text-[13px]" />
-<input value={form.image_url3} onChange={(e)=>setForm({...form,image_url3:e.target.value})} placeholder="Image 3 URL" className="w-full border rounded-lg px-3 py-2.5 text-[13px]" />
-<input value={form.image_url4} onChange={(e)=>setForm({...form,image_url4:e.target.value})} placeholder="Image 4 URL" className="w-full border rounded-lg px-3 py-2.5 text-[13px]" />
-<textarea value={form.detail} onChange={(e)=>setForm({...form,detail:e.target.value})} placeholder="Full Detail - Description" className="w-full border rounded-lg px-3 py-2.5 text-[13px] h-[80px]" />
+              <input value={form.image_url2} onChange={(e)=>setForm({...form,image_url2:e.target.value})} placeholder="Image 2 URL" className="w-full border rounded-lg px-3 py-2.5 text-[13px]" />
+              <input value={form.image_url3} onChange={(e)=>setForm({...form,image_url3:e.target.value})} placeholder="Image 3 URL" className="w-full border rounded-lg px-3 py-2.5 text-[13px]" />
+              <input value={form.image_url4} onChange={(e)=>setForm({...form,image_url4:e.target.value})} placeholder="Image 4 URL" className="w-full border rounded-lg px-3 py-2.5 text-[13px]" />
+              <textarea value={form.detail} onChange={(e)=>setForm({...form,detail:e.target.value})} placeholder="Full Detail - Description" className="w-full border rounded-lg px-3 py-2.5 text-[13px] h-[80px]" />
               <div className="grid grid-cols-3 gap-2 text-[11px] p-2 bg-gray-50 rounded-lg"><label className="flex gap-1 items-center"><input type="checkbox" checked={form.is_best_seller} onChange={e=>setForm({...form,is_best_seller:e.target.checked})}/> Best Seller - Public</label><label className="flex gap-1 items-center"><input type="checkbox" checked={form.is_featured} onChange={e=>setForm({...form,is_featured:e.target.checked})}/> Featured - Public</label><label className="flex gap-1 items-center"><input type="checkbox" checked={form.is_active} onChange={e=>setForm({...form,is_active:e.target.checked})}/> Active - Public</label></div>
               <button type="submit" className="w-full bg-[#0f2e26] text-white py-3 rounded-xl font-bold">Save - Daraz Total Connected - Public Live</button>
             </form>
           </div>
         </div>
-    
       )}
     </div>
   );
