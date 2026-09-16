@@ -183,11 +183,16 @@ setShowAddForm(false);setEditingProduct(null);setForm({name:'',price:'',category
               <div className="flex gap-2"><input required placeholder="Affiliate Link s.daraz.pk?cc Safe" value={form.affiliate_link} onChange={e=>setForm({...form,affiliate_link:e.target.value})} className="flex-1 border rounded-lg px-3 py-2.5 text-[13px] border-orange-300"/><button type="button" onClick={handleFetchDaraz} disabled={darazFetching} className="bg-black text-white px-3 rounded-lg text-[11px] font-bold">{darazFetching?'...':'Daraz Auto'}</button></div>
               <p className="text-[10px] text-gray-500">Auto dabao to Name/Price/Image auto -?cc safe rahega - Public pe update hoga! Manual Rs. PKR bhi likh sakte ho</p>
               <select value={form.display_theme} onChange={e=>setForm({...form,display_theme:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px]"><option value="default">Display Theme - Default - Public</option><option value="featured">Featured Highlight - Public</option><option value="minimal">Minimal - Public</option><option value="premium">Premium - Public</option></select>
+      <input value={form.image_url2} onChange={(e)=>setForm({...form,image_url2:e.target.value})} placeholder="Image 2 URL" className="w-full border rounded-lg px-3 py-2.5 text-[13px]" />
+<input value={form.image_url3} onChange={(e)=>setForm({...form,image_url3:e.target.value})} placeholder="Image 3 URL" className="w-full border rounded-lg px-3 py-2.5 text-[13px]" />
+<input value={form.image_url4} onChange={(e)=>setForm({...form,image_url4:e.target.value})} placeholder="Image 4 URL" className="w-full border rounded-lg px-3 py-2.5 text-[13px]" />
+<textarea value={form.detail} onChange={(e)=>setForm({...form,detail:e.target.value})} placeholder="Full Detail - Description" className="w-full border rounded-lg px-3 py-2.5 text-[13px] h-[80px]" />
               <div className="grid grid-cols-3 gap-2 text-[11px] p-2 bg-gray-50 rounded-lg"><label className="flex gap-1 items-center"><input type="checkbox" checked={form.is_best_seller} onChange={e=>setForm({...form,is_best_seller:e.target.checked})}/> Best Seller - Public</label><label className="flex gap-1 items-center"><input type="checkbox" checked={form.is_featured} onChange={e=>setForm({...form,is_featured:e.target.checked})}/> Featured - Public</label><label className="flex gap-1 items-center"><input type="checkbox" checked={form.is_active} onChange={e=>setForm({...form,is_active:e.target.checked})}/> Active - Public</label></div>
               <button type="submit" className="w-full bg-[#0f2e26] text-white py-3 rounded-xl font-bold">Save - Daraz Total Connected - Public Live</button>
             </form>
           </div>
         </div>
+    
       )}
     </div>
   );
