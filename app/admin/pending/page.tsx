@@ -23,12 +23,16 @@ export default function PendingPage() {
   const approve = async (p: any) => {
     // Same Daraz Price - No Extra Profit
     const myPrice = p.daraz_price;
+    let finalLink = p.daraz_link || "";
+  if (finalLink && !finalLink.includes('?cc') && !finalLink.includes('&cc')) {
+    finalLink = finalLink.includes('?') ? finalLink + '&cc' : finalLink + '?cc';
+  }
     await supabase.from('products').insert({
       name: p.product_name,
       price: myPrice,
-      original_price: p.daraz_price,
-      image: p.image_url,
-      daraz_link: p.daraz_link,
+      original_price: p.daraz_price
+      image_url: p.image_url,
+daraz_link: finalLink,
       category: p.category,
       
     });
