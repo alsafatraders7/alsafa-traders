@@ -21,4 +21,20 @@ export default function AdminPage(){
   const [showAddForm,setShowAddForm]=useState(false);
   const [searchQuery,setSearchQuery]=useState('');
   const [updatingId,setUpdatingId]=useState<string|null>(null);
-  const [editingProduct,setEditingProduct
+  const [editingProduct,setEditingProduct]=useState<any>(null);
+  const [categoriesList,setCategoriesList]=useState<any[]>([]);
+  const [activeTab,setActiveTab]=useState<'dashboard'|'buttons'>('dashboard');
+  const [newCatName,setNewCatName]=useState('');
+  const [imageUploading,setImageUploading]=useState(false);
+  const [form,setForm]=useState({name:'',price:'',category:'',image_url:'',image_url2:'',image_url3:'',image_url4:'',detail:'',affiliate_link:'',is_best_seller:false,is_featured:false,is_active:true,display_theme:'default'});
+
+  useEffect(()=>{
+    const init=async()=>{
+      const {data}=await supabase.auth.getSession();
+      if(data.session){setIsAuthenticated(true);setEmail(data.session.user.email||'');}
+      setCheckingAuth(false);
+    };
+    init();
+  },[]);
+
+  useEffect(()=>
