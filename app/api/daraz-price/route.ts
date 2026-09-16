@@ -3,52 +3,47 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
-    const { url } = await req.json();
-    if (!url) return NextResponse.json({ success: false, message: "Link missing" });
+    const body = await req.json();
+    const url = body.url;
+    if (!url) return NextResponse.json({ success: false });
 
-    // Follow s.daraz.pk redirect
-    let targetUrl = url;
+    let finalUrl = url;
     try {
-      const r = await fetch(url, { redirect: "follow", headers: { "User-Agent": "Mozilla/5.0" } });
-      targetUrl = r.url || url;
+      const r = await fetch(url, { redirect: "follow" });
+      finalUrl = r.url || url;
     } catch {}
 
-    const htmlRes = await fetch(targetUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Accept-Language": "en-US,en;q=0.9",
-      },
+    const res = await fetch(finalUrl, {
+      headers: { "User-Agent": "Mozilla/5.0" },
       cache: "no-store",
     });
-    const html = await htmlRes.text();
+    const html = await res.text();
 
-    // Daraz price extract - multiple patterns
     let price: number | null = null;
-    let name: string | null = null;
-    let image: string | null = null;
 
-    const patterns = [
-      /"salePrice"\s*:\s*\{"text":"Rs\.\s*([\d,]+)"/,
-      /"price"\s*:\s*\{"text":"Rs\.\s*([\d,]+)"/,
-      /"priceText"\s*:\s*"Rs\.\s*([\d,]+)"/,
-      /"currentPrice"\s*:\s*"([\d,]+)"/,
-    ];
+    // Simple and safe regex
+    const m1 = html.match(/salePrice[^0-9]*Rs\.\s*([0-9,]+)/);
+    const m2 = html.match(/"priceText":"Rs\.\s*([0-9,]+)"/);
+    const m3 = html.match(/Rs\.\s*([0-9,]{3,6})/);
 
-    for (const p of patterns) {
-      const m = html.match(p);
-      if (m) {
-        price = parseInt(m[1].replace(/,/g, ""));
-        break;
-      }
-    }
-
-    // Name
-    const titleMatch = html.match(/<title>(.*?)<\/title>/) || html.match(/"title":"(.*?)"/);
-    if (titleMatch) name = titleMatch[1].replace(/ - Daraz.*$/, "").trim();
-
-    // Image
-    const imgMatch = html.match(/property="og:image"\s+content="([^"]+)"/) || html.match(/"image":"([^"]+)"/);
-    if (imgMatch) image = imgMatch[1];
+    const found = m1?.[1] || m2?.[1] || m3?.[1];
+    if (found) price = parseInt(found.replace(/,/g, ""));
 
     if (!price) {
-      // last
+      return NextResponse.json({ success: false, message: "Price not found" });
+    }
+
+    return NextResponse.json({
+      success: true,
+      price: price,
+      name: "Daraz Product",
+      image: "",
+    });
+  } catch (e: any) {
+    return NextResponse.json({ success: false, message: e.message });
+  }
+}
+
+export async function GET() {
+  return NextResponse.json({ ok: true, msg: "API LIVE" });
+}
