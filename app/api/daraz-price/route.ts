@@ -1,37 +1,54 @@
-import { NextResponse } from "next/server";
-export const dynamic = "force-dynamic";
+import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   try {
-    const { url } = await req.json();
-    if (!url) return NextResponse.json({ success: false, message: "Link khali hai" });
+    let { url } = await req.json();
+    if (!url) return NextResponse.json({ success: false });
 
-    // 1. Resolve short link
+    // short link ko follow karo
     let finalUrl = url;
-    try {
-      const r = await fetch(url, { redirect: "follow", headers: { "User-Agent": "Mozilla/5.0" } });
+    if (url.includes('s.daraz.pk')) {
+      const r = await fetch(url, { redirect: 'follow', headers: { 'User-Agent': 'Mozilla/5.0' } });
       finalUrl = r.url;
-    } catch {}
+    }
 
-    // 2. Fetch Daraz page
-    const resp = await fetch(finalUrl, {
-      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36" },
-      cache: "no-store",
-      next: { revalidate: 0 }
-    });
-    const html = await resp.text();
+    const res = await fetch(finalUrl, { headers: { 'User-Agent': 'Mozilla/5.0 Chrome/120', 'Accept-Language': 'en-US,en' } });
+    const html = await res.text();
 
-    // 3. Price nikalna - sabse safe tareeka
-    const m = html.match(/"salePrice"\s*:\s*\{[^}]*"text"\s*:\s*"Rs\.\s*([0-9,]+)"/)
-           || html.match(/"priceText"\s*:\s*"Rs\.\s*([0-9,]+)"/)
-           || html.match(/currentPrice":"Rs\.\s*([0-9,]+)"/);
+    // price nikalne ki 3 koshish
+    let price = 0;
+    let name = '';
 
-    if (!m) return NextResponse.json({ success: false, message: "Daraz ne HTML block kar diya, manual likho" });
+    // 1. og:title
+    const titleMatch = html.match(/<meta property="og:title" content="([^"]+)"/);
+    if (titleMatch) name = titleMatch[1];
 
-    const price = parseInt(m[1].replace(/,/g, ""));
+    // 2. price from JSON
+    const priceMatch = html.match(/"currentPrice":\{"value":([\d\.]+)/) ||
+                       html.match(/"price":\{"text":"Rs\. ([\d,]+)"/) ||
+                       html.match(/"priceText":"Rs\. ([\d,]+)"/) ||
+                       html.match(/og:price:amount" content="([\d\.]+)"/);
 
-    return NextResponse.json({ success: true, price });
-  } catch (e: any) {
-    return NextResponse.json({ success: false, message: e.message });
+    if (priceMatch) {
+      price = parseFloat(priceMatch[1].replace(/,/g,''));
+    }
+
+    // 3. fallback regex Rs.
+    if (!price) {
+      const fallback = html.match(/Rs\.\s*([\d,]+)/);
+      if (fallback) price = parseFloat(fallback[1].replace(/,/g,''));
+    }
+
+    // image
+    const imgMatch = html.match(/<meta property="og:image" content="([^"]+)"/);
+    const image = imgMatch? imgMatch[1] : '';
+
+    if (price) {
+      return NextResponse.json({ success: true, price, name, image });
+    } else {
+      return NextResponse.json({ success: false, error: 'price not found', debugUrl: finalUrl });
+    }
+  } catch (e:any) {
+    return NextResponse.json({ success: false, error: e.message });
   }
 }
