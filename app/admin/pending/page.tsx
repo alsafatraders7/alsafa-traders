@@ -30,11 +30,11 @@ export default function PendingPage() {
     await supabase.from('products').insert({
       name: p.product_name,
       price: myPrice,
-      original_price: p.daraz_price
-      image_url: p.image_url,
-daraz_link: finalLink,
-      category: p.category,
-      
+     original_price: p.daraz_price,
+    image: p.image_url,
+    image_url: p.image_url,
+    daraz_link: finalLink,
+    category: p.category,
     });
     await supabase.from('pending_products').update({ status: 'approved' }).eq('id', p.id);
      alert(`Approved! ${p.product_name} - LIVE at Rs.${p.daraz_price}`);
