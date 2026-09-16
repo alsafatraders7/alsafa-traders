@@ -15,7 +15,6 @@ export default function AdminPage(){
   const [showPassword,setShowPassword]=useState(false);
   const [authError,setAuthError]=useState('');
   const [authLoading,setAuthLoading]=useState(false);
-  const [mobileMenu,setMobileMenu]=useState(false);
   const [products,setProducts]=useState<any[]>([]);
   const [loading,setLoading]=useState(true);
   const [showAddForm,setShowAddForm]=useState(false);
@@ -25,43 +24,241 @@ export default function AdminPage(){
   const [activeTab,setActiveTab]=useState<'dashboard'|'buttons'>('dashboard');
   const [newCatName,setNewCatName]=useState('');
   const [imageUploading,setImageUploading]=useState(false);
-  const [form,setForm]=useState({name:'',price:'',category:'',image_url:'',image_url2:'',image_url3:'',image_url4:'',detail:'',affiliate_link:'',is_best_seller:false,is_featured:false,is_active:true,display_theme:'default'});
+  const [form,setForm]=useState({
+    name:'',price:'',category:'',
+    image_url:'',image_url2:'',image_url3:'',image_url4:'',
+    detail:'',affiliate_link:'',
+    is_best_seller:false,is_featured:false,
+    is_active:true,display_theme:'default'
+  });
 
   useEffect(()=>{
     const init=async()=>{
       const {data}=await supabase.auth.getSession();
-      if(data.session){setIsAuthenticated(true);setEmail(data.session.user.email||'');}
+      if(data.session){
+        setIsAuthenticated(true);
+        setEmail(data.session.user.email||'');
+      }
       setCheckingAuth(false);
     };
     init();
   },[]);
 
-  useEffect(()=>{if(isAuthenticated){fetchProducts();fetchCategories();}},[isAuthenticated]);
+  useEffect(()=>{
+    if(isAuthenticated){
+      fetchProducts();
+      fetchCategories();
+    }
+  },[isAuthenticated]);
 
-  const fetchProducts=async()=>{setLoading(true);const {data}=await supabase.from('products').select('*').order('created_at',{ascending:false}).limit(100);if(data)setProducts(data);setLoading(false);};
-  const fetchCategories=async()=>{const {data}=await supabase.from('categories').select('*').order('name');if(data)setCategoriesList(data);};
+  const fetchProducts=async()=>{
+    setLoading(true);
+    const {data}=await supabase.from('products').select('*').order('created_at',{ascending:false}).limit(100);
+    if(data) setProducts(data);
+    setLoading(false);
+  };
+
+  const fetchCategories=async()=>{
+    const {data}=await supabase.from('categories').select('*').order('name');
+    if(data) setCategoriesList(data);
+  };
 
   const toCC = (url:string) => {
     if(!url) return '';
-    try{ return url.split('?')[0].split('&')[0] + '?cc'; }catch{ return url; }
-  }
+    try { return url.split('?')[0].split('&')[0] + '?cc'; }
+    catch { return url; }
+  };
 
   const handleImageUpload=async(e:any, key='image_url')=>{
-    const file=e.target.files[0]; if(!file) return; setImageUploading(true);
+    const file=e.target.files[0];
+    if(!file) return;
+    setImageUploading(true);
     const fileName=`${Date.now()}-${file.name}`.replace(/\s+/g,'-');
     const {error}=await supabase.storage.from('product-images').upload(fileName,file);
-    if(error){alert('Storage bucket Public ON karo: '+error.message);setImageUploading(false);return;}
+    if(error){
+      alert('Bucket Public ON karo: '+error.message);
+      setImageUploading(false);
+      return;
+    }
     const {data}=supabase.storage.from('product-images').getPublicUrl(fileName);
     setForm(f=>({...f,[key]:data.publicUrl}));
     setImageUploading(false);
   };
 
-  const addCategory=async()=>{if(!newCatName.trim())return;const slug=newCatName.toLowerCase().replace(/[^a-z0-9]+/g,'-');await supabase.from('categories').insert([{name:newCatName.trim(),slug}]);await supabase.from('nav_buttons').insert([{label:newCatName.trim(),slug,type:'category',active:true,order_index:0}]);setNewCatName('');fetchCategories();};
-  const deleteCategory=async(slug:string)=>{if(!confirm('Delete?'))return;await supabase.from('categories').delete().eq('slug',slug);await supabase.from('nav_buttons').delete().eq('slug',slug);fetchCategories();};
+  const addCategory=async()=>{
+    if(!newCatName.trim()) return;
+    const slug=newCatName.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+    await supabase.from('categories').insert([{name:newCatName.trim(),slug}]);
+    await supabase.from('nav_buttons').insert([{label:newCatName.trim(),slug,type:'category',active:true,order_index:0}]);
+    setNewCatName('');
+    fetchCategories();
+  };
 
-  const handleLogin=async(e:any)=>{e.preventDefault();setAuthLoading(true);setAuthError('');const {error}=await supabase.auth.signInWithPassword({email,password});if(error){setAuthError(error.message);setAuthLoading(false);}else{setIsAuthenticated(true);setAuthLoading(false);}};
+  const deleteCategory=async(slug:string)=>{
+    if(!confirm('Delete?')) return;
+    await supabase.from('categories').delete().eq('slug',slug);
+    await supabase.from('nav_buttons').delete().eq('slug',slug);
+    fetchCategories();
+  };
+
+  const handleLogin=async(e:any)=>{
+    e.preventDefault();
+    setAuthLoading(true);
+    setAuthError('');
+    const {error}=await supabase.auth.signInWithPassword({email,password});
+    if(error){setAuthError(error.message);setAuthLoading(false);}
+    else{setIsAuthenticated(true);setAuthLoading(false);}
+  };
 
   const handleSave=async(e:any)=>{
     e.preventDefault();
     const aff = toCC(form.affiliate_link);
-    const payload:any={name:form.name,price:parseFloat(form.price),category:form.category,image_url:form.image_url,affiliate_link:aff,is_best_seller:form.is_best_seller,is_featured:form.is_featured,is_active:true,display_theme:form.display_theme,description:`${form.detail} || IMG2:${form.image_url2} ||
+    const extra = form.detail + " || IMG2:" + form.image_url2 + " || IMG3:" + form.image_url3 + " || IMG4:" + form.image_url4;
+    const payload:any = {
+      name: form.name,
+      price: parseFloat(form.price),
+      category: form.category,
+      image_url: form.image_url,
+      affiliate_link: aff,
+      is_best_seller: form.is_best_seller,
+      is_featured: form.is_featured,
+      is_active: true,
+      display_theme: form.display_theme,
+      description: extra
+    };
+    if(editingProduct){
+      await supabase.from('products').update(payload).eq('id',editingProduct.id);
+    } else {
+      const slug=form.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now();
+      await supabase.from('products').insert([{...payload,slug}]);
+    }
+    setShowAddForm(false);
+    setEditingProduct(null);
+    setForm({
+      name:'',price:'',category:'',image_url:'',image_url2:'',image_url3:'',image_url4:'',
+      detail:'',affiliate_link:'',is_best_seller:false,is_featured:false,is_active:true,display_theme:'default'
+    });
+    fetchProducts();
+  };
+
+  const handleEdit=(p:any)=>{
+    const parts=(p.description||'').split('||');
+    setEditingProduct(p);
+    setForm({
+      name:p.name,
+      price:String(p.price),
+      category:p.category,
+      image_url:p.image_url,
+      image_url2:parts[1]?.replace('IMG2:','')?.trim()||'',
+      image_url3:parts[2]?.replace('IMG3:','')?.trim()||'',
+      image_url4:parts[3]?.replace('IMG4:','')?.trim()||'',
+      detail:parts[0]?.trim()||'',
+      affiliate_link:p.affiliate_link,
+      is_best_seller:p.is_best_seller||false,
+      is_featured:p.is_featured||false,
+      is_active:true,
+      display_theme:p.display_theme||'default'
+    });
+    setShowAddForm(true);
+  };
+
+  const handleDelete=async(id:string)=>{
+    if(!confirm('Delete?')) return;
+    await supabase.from('products').delete().eq('id',id);
+    fetchProducts();
+  };
+
+  const filtered=products.filter((p:any)=>p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const categories=Array.from(new Set(products.map((p:any)=>p.category))) as string[];
+  const bestSellers=products.filter((p:any)=>p.is_best_seller);
+  const featured=products.filter((p:any)=>p.is_featured);
+
+  if(checkingAuth) return <div className="min-h-screen bg-[#0f2e26] text-white flex items-center justify-center">Checking...</div>;
+
+  if(!isAuthenticated){
+    return(
+      <div className="min-h-screen bg-[#0f2e26] flex items-center justify-center p-4">
+        <div className="bg-white rounded-[20px] p-8 w-full max-w-[400px]">
+          <h1 className="text-[22px] font-bold text-center">Al Safa Traders</h1>
+          <form onSubmit={handleLogin} className="space-y-4 mt-4">
+            <input type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email" className="w-full border rounded-xl px-4 py-3"/>
+            <div className="relative">
+              <input type={showPassword?"text":"password"} required value={password} onChange={e=>setPassword(e.target.value)} placeholder="Password" className="w-full border rounded-xl px-4 py-3"/>
+              <button type="button" onClick={()=>setShowPassword(!showPassword)} className="absolute right-2 top-2 bg-gray-100 px-3 py-1 rounded-full text-xs">{showPassword?'Hide':'Show'}</button>
+            </div>
+            {authError&&<p className="text-red-600 text-xs bg-red-50 p-2 rounded">{authError}</p>}
+            <button type="submit" className="w-full bg-[#0f2e26] text-white py-3 rounded-xl font-bold">{authLoading?'Unlocking...':'Unlock'}</button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  return(
+    <div className="min-h-screen bg-[#f8f9f6] flex text-[13px]">
+      <div className="w-[260px] bg-[#0f2e26] text-white hidden lg:flex flex-col fixed h-screen">
+        <div className="p-5 flex items-center gap-3"><div className="w-10 h-10 bg-[#d4a15a] rounded-lg flex items-center justify-center font-bold">AT</div><div><p className="font-bold text-[#f0d9a0]">Al Safa Traders</p></div></div>
+        <div className="px-3 space-y-0.5 flex-1 overflow-y-auto">
+          <div className="bg-[#c49a4b] text-black px-4 py-2.5 rounded-lg font-semibold">Dashboard - {products.length}</div>
+          <div className="px-4 py-2.5 text-gray-300">Products - {products.length}</div>
+          <div className="px-4 py-2.5 text-gray-300">Featured - {featured.length}</div>
+          <div className="px-4 py-2.5 text-gray-300">Best Sellers - {bestSellers.length}</div>
+          <div className="px-4 py-2.5 text-gray-300">Categories - {categoriesList.length}</div>
+          <div className="px-4 py-2.5 text-gray-300">Daraz - Total Connected - 4 Pic</div>
+          <button onClick={async()=>{await supabase.auth.signOut();setIsAuthenticated(false);}} className="w-full px-4 py-2.5 text-left text-gray-300 mt-4 border-t border-white/10 pt-4">Lock Panel</button>
+        </div>
+        <div className="p-4 border-t border-white/10 text-[10px] text-gray-400">{email}</div>
+      </div>
+      <div className="flex-1 lg:ml-[260px]">
+        <div className="bg-white border-b px-4 lg:px-6 py-3 flex items-center justify-between sticky top-0 z-20">
+          <div className="flex items-center gap-3 flex-1"><input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="Search..." className="bg-[#f8f9f6] border rounded-lg px-4 py-2 w-full max-w-[350px] text-[13px]"/></div>
+          <div className="flex items-center gap-2">
+            <button onClick={()=>setActiveTab(activeTab==='dashboard'?'buttons':'dashboard')} className="border px-3 py-2 rounded-lg text-[11px] font-bold">{activeTab==='dashboard'?'Button Controls':'Dashboard'}</button>
+            <button onClick={()=>{setEditingProduct(null);setForm({name:'',price:'',category:'',image_url:'',image_url2:'',image_url3:'',image_url4:'',detail:'',affiliate_link:'',is_best_seller:false,is_featured:false,is_active:true,display_theme:'default'});setShowAddForm(true);}} className="bg-[#c49a4b] text-black px-4 py-2 rounded-lg text-[12px] font-bold">+ Add Product - 4 Pic</button>
+          </div>
+        </div>
+        <div className="p-3 lg:p-6">
+          {activeTab==='buttons'?(
+            <div className="bg-white rounded-xl p-5 border">
+              <h2 className="font-bold text-[16px]">Public Page Controls - Shop All | Bartan | Crockery | Electronics | Kids | Kitchen | Storage</h2>
+              <div className="flex gap-2 mt-4"><input value={newCatName} onChange={e=>setNewCatName(e.target.value)} placeholder="Nayi Category" className="flex-1 border rounded-xl px-4 py-2.5"/><button onClick={addCategory} className="bg-black text-white px-5 rounded-xl font-bold">+ Add Button</button></div>
+              <div className="grid grid-cols-2 gap-2 mt-4">{categoriesList.map((c:any)=>(<div key={c.slug} className="flex justify-between border rounded-xl p-3"><span>{c.name}</span><button onClick={()=>deleteCategory(c.slug)} className="text-red-500 text-[11px]">Delete</button></div>))}</div>
+            </div>
+          ):(
+            <div className="bg-white rounded-xl p-4 border">
+              <p className="font-bold mb-3">Recent Products - {filtered.length} - 4 Pic LIVE -?cc Safe</p>
+              {loading?<p className="text-center py-8">Loading...</p>:(
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+                {filtered.slice(0,20).map((p:any)=>(
+                  <div key={p.id} className="border rounded-xl p-2.5">
+                    <img src={p.image_url} className="w-full h-[100px] object-cover rounded-lg bg-gray-50" alt=""/>
+                    <p className="text-[11px] font-medium mt-2 line-clamp-1">{p.name}</p>
+                    <p className="text-[10px] text-gray-500">{p.category}</p>
+                    <p className="text-[12px] font-bold">Rs. {p.price}</p>
+                    <div className="flex gap-1 mt-1"><button onClick={()=>handleEdit(p)} className="flex-1 border rounded-full text-[9px] py-1">Edit</button><button onClick={()=>handleDelete(p.id)} className="flex-1 border rounded-full text-[9px] py-1">Del</button></div>
+                  </div>
+                ))}
+                {filtered.length===0&&<p className="col-span-full text-center py-8 text-gray-400">No products - Add karo</p>}
+              </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+      {showAddForm&&(
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[16px] w-full max-w-[550px] p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between mb-4"><h3 className="font-bold">{editingProduct?'Edit':'Add'} Product - 4 Pic</h3><button onClick={()=>{setShowAddForm(false);setEditingProduct(null);}} className="w-8 h-8 bg-gray-100 rounded-full">X</button></div>
+            <form onSubmit={handleSave} className="space-y-3">
+              <input required placeholder="Product Name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px]"/>
+              <div className="grid grid-cols-2 gap-2">
+                <input required type="number" placeholder="Price LIVE Rs." value={form.price} onChange={e=>setForm({...form,price:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px] bg-green-50 font-bold"/>
+                <select required value={form.category} onChange={e=>setForm({...form,category:e.target.value})} className="w-full border rounded-lg px-3 py-2.5 text-[13px] bg-yellow-50 font-bold">
+                  <option value="">Category Select</option>
+                  {categoriesList.map((c:any)=><option key={c.slug} value={c.name}>{c.name}</option>)}
+                  <option value="Kitchen">Kitchen</option>
+                  <option value="Bartan">Bartan</option>
+                  <option value="Storage">Storage</option>
+                </select>
+              </div>
+              <div className
