@@ -3,47 +3,35 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const url = body.url;
-    if (!url) return NextResponse.json({ success: false });
+    const { url } = await req.json();
+    if (!url) return NextResponse.json({ success: false, message: "Link khali hai" });
 
+    // 1. Resolve short link
     let finalUrl = url;
     try {
-      const r = await fetch(url, { redirect: "follow" });
-      finalUrl = r.url || url;
+      const r = await fetch(url, { redirect: "follow", headers: { "User-Agent": "Mozilla/5.0" } });
+      finalUrl = r.url;
     } catch {}
 
-    const res = await fetch(finalUrl, {
-      headers: { "User-Agent": "Mozilla/5.0" },
+    // 2. Fetch Daraz page
+    const resp = await fetch(finalUrl, {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36" },
       cache: "no-store",
+      next: { revalidate: 0 }
     });
-    const html = await res.text();
+    const html = await resp.text();
 
-    let price: number | null = null;
+    // 3. Price nikalna - sabse safe tareeka
+    const m = html.match(/"salePrice"\s*:\s*\{[^}]*"text"\s*:\s*"Rs\.\s*([0-9,]+)"/)
+           || html.match(/"priceText"\s*:\s*"Rs\.\s*([0-9,]+)"/)
+           || html.match(/currentPrice":"Rs\.\s*([0-9,]+)"/);
 
-    // Simple and safe regex
-    const m1 = html.match(/salePrice[^0-9]*Rs\.\s*([0-9,]+)/);
-    const m2 = html.match(/"priceText":"Rs\.\s*([0-9,]+)"/);
-    const m3 = html.match(/Rs\.\s*([0-9,]{3,6})/);
+    if (!m) return NextResponse.json({ success: false, message: "Daraz ne HTML block kar diya, manual likho" });
 
-    const found = m1?.[1] || m2?.[1] || m3?.[1];
-    if (found) price = parseInt(found.replace(/,/g, ""));
+    const price = parseInt(m[1].replace(/,/g, ""));
 
-    if (!price) {
-      return NextResponse.json({ success: false, message: "Price not found" });
-    }
-
-    return NextResponse.json({
-      success: true,
-      price: price,
-      name: "Daraz Product",
-      image: "",
-    });
+    return NextResponse.json({ success: true, price });
   } catch (e: any) {
     return NextResponse.json({ success: false, message: e.message });
   }
-}
-
-export async function GET() {
-  return NextResponse.json({ ok: true, msg: "API LIVE" });
 }
