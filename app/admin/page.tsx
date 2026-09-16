@@ -35,7 +35,7 @@ export default function AdminPage(){
   const fetchProducts=async()=>{setLoading(true);const {data}=await supabase.from('products').select('*').order('created_at',{ascending:false}).limit(100);if(data)setProducts(data);setLoading(false);};
   const fetchCategories=async()=>{const {data}=await supabase.from('categories').select('*').order('name');if(data)setCategoriesList(data);};
 
-  const handleImageUpload=async(e:any)=>{
+  const handleImageUpload=async(e:any, key='image_url')=>{
     const file=e.target.files[0]; if(!file) return; setImageUploading(true);
     const fileName=`${Date.now()}-${file.name}`;
     const {error}=await supabase.storage.from('product-images').upload(fileName,file);
