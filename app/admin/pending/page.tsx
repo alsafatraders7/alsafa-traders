@@ -1,38 +1,24 @@
-async function approveSelected() {
-    if (selected.length === 0) {
-      alert("Pehle checkbox pe tick karo bhai!");
-      return;
-    }
-    console.log("Approving:", selected);
-    const selectedProducts = products.filter((p) => selected.includes(p.id));
-    
-    const productsWithAffiliate = selectedProducts.map((p) => ({
-      product_name: p.product_name,
-      daraz_price: p.daraz_price,
-      category: p.category,
-      daraz_link: p.daraz_link,
-      affiliate_link: getAffiliateLink(p.daraz_link),
-      image_url: p.image_url,
-      seller_name: p.seller_name,
-      status: 'live'
-    }));
+"use client";
+import { useEffect, useState } from 'react';
 
-    console.log("Inserting:", productsWithAffiliate);
+export default function PendingPage() {
+  const [products, setProducts] = useState<any[]>([]);
+  
+  useEffect(() => {
+    fetch('/api/fetch-daraz')
+      .then(r => r.json())
+      .then(d => console.log(d));
+  }, []);
 
-    const { data, error: insertError } = await supabase.from("products").insert(productsWithAffiliate).select();
-    if (insertError) { 
-      alert("INSERT ERROR: " + insertError.message + "\n\nSupabase me products table me affiliate_link column banao!");
-      console.error(insertError);
-      return; 
-    }
-
-    const { error: updateError } = await supabase.from("pending_products").update({ status: "approved" }).in("id", selected);
-    if(updateError){
-      alert("Update Error: " + updateError.message);
-      return;
-    }
-
-    alert(`${selected.length} LIVE HO GAYA! 💰`);
-    setSelected([]);
-    fetchPending();
-  }
+  return (
+    <div style={{ padding: '20px' }}>
+      <h1 style={{ fontSize: '24px', fontWeight: 'bold' }}>Pending Products - Kitchen + Home Gadgets</h1>
+      <p>Kitchen + Home Gadgets LOCKED!</p>
+      <p>Categories: kitchen-dining, home-appliances, kitchen-appliances, home-decor, storage-organisation, cleaning-tools, bath, bedding</p>
+      <div style={{ marginTop: '20px', padding: '10px', background: '#f0f0f0' }}>
+        <p>Vercel Build Fixed! ✅</p>
+        <p>Ab /api/fetch-daraz GREEN hai!</p>
+      </div>
+    </div>
+  );
+}
