@@ -21,23 +21,23 @@ export default function PendingPage() {
   useEffect(() => { load(); }, []);
 
   const approve = async (p: any) => {
-    // Same Daraz Price - No Extra Profit
+    // Same 【entity-Daraz¦canonical_name=Daraz】 Price - No Extra Profit - Auto ?cc for Affiliate
     const myPrice = p.daraz_price;
     let finalLink = p.daraz_link || "";
-  if (finalLink && !finalLink.includes('?cc') && !finalLink.includes('&cc')) {
-    finalLink = finalLink.includes('?') ? finalLink + '&cc' : finalLink + '?cc';
-  }
+    if (finalLink && !finalLink.includes('?cc') && !finalLink.includes('&cc')) {
+      finalLink = finalLink.includes('?') ? finalLink + '&cc' : finalLink + '?cc';
+    }
     await supabase.from('products').insert({
       name: p.product_name,
       price: myPrice,
-     original_price: p.daraz_price,
-    image: p.image_url,
-    image_url: p.image_url,
-    daraz_link: finalLink,
-    category: p.category,
+      original_price: p.daraz_price,
+      image: p.image_url,
+      image_url: p.image_url,
+      daraz_link: finalLink,
+      category: p.category,
     });
     await supabase.from('pending_products').update({ status: 'approved' }).eq('id', p.id);
-     alert(`Approved! ${p.product_name} - LIVE at Rs.${p.daraz_price}`);
+    alert(`Approved! ${p.product_name} - LIVE at Rs.${p.daraz_price}`);
     load();
   };
 
@@ -56,7 +56,7 @@ export default function PendingPage() {
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
       <h1 style={{ fontSize: '24px', fontWeight: 'bold' }}>Al Safa Traders - Pending (Kitchen + Home Gadgets)</h1>
-      <button onClick={fetchDaraz} style={{ marginTop: '15px', padding: '10px 20px', background: 'black', color: 'white', borderRadius: '8px' }}>Fetch 【entity-Daraz¦canonical_name=Daraz】 Products</button>
+      <button onClick={fetchDaraz} style={{ marginTop: '15px', padding: '10px 20px', background: 'black', color: 'white', borderRadius: '8px' }}>Fetch Daraz Products</button>
       <button onClick={load} style={{ marginLeft: '10px', padding: '10px 20px', background: '#eee', borderRadius: '8px' }}>Refresh</button>
       
       {loading ? <p style={{marginTop: '20px'}}>Loading...</p> : (
@@ -66,7 +66,7 @@ export default function PendingPage() {
               <img src={p.image_url} style={{ width: '80px', height: '80px', objectFit: 'cover' }} />
               <div style={{ flex: 1 }}>
                 <p style={{ fontWeight: 'bold' }}>{p.product_name}</p>
-                <p>【entity-Daraz¦canonical_name=Daraz】: Rs.{p.daraz_price} | Category: {p.category}</p>
+                <p>Daraz: Rs.{p.daraz_price} | Category: {p.category}</p>
                 Daraz Price: Rs.{p.daraz_price}
                 <div style={{ marginTop: '10px' }}>
                   <button onClick={() => approve(p)} style={{ padding: '6px 15px', background: 'green', color: 'white', borderRadius: '5px', marginRight: '10px' }}>Approve + Add Profit</button>
