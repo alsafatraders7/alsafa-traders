@@ -1,13 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
 
-function getPrice(p: any) {
-  const current = p?.price || p?.price_discounted || 1499
-  const original = p?.price_original || p?.price || 2200
-  const discount = original > current ? Math.round(((original - current) / original) * 100) : 32
-  return { current, original, discount }
-}
-
 export default function Home() {
   const [products, setProducts] = useState<any[]>([])
   const [search, setSearch] = useState("")
@@ -125,7 +118,7 @@ export default function Home() {
         <h2 className="font-black text-[#1A3C34] text-xl">{cat} ({filtered.length})</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
           {filtered.map((p: any) => {
-            const price = getPrice(p)
+            
             return (
             <div key={p.id} className="bg-white border rounded-[18px] overflow-hidden shadow-sm">
               <div onClick={() => { setSelected(p); loadReviews(p.id) }} className="cursor-pointer">
@@ -133,10 +126,8 @@ export default function Home() {
                 <div className="p-3">
                   <p className="font-bold text-sm line-clamp-1">{p.name}</p>
                   <p className="text-[11px] text-gray-500">{p.category}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs line-through text-gray-400">Rs.{price.original}</span>
-                    <span className="font-black">Rs.{price.current}</span>
-                    <span className="bg-red-100 text-red-600 text-[10px] px-2 py-0.5 rounded-full">-{price.discount}%</span>
+                  <div className="flex items-center gap-2 mt-1">           
+                    <span className="font-black text-[15px]">Rs.{p.price} PKR</span>
                   </div>
                 </div>
               </div>
