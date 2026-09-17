@@ -56,7 +56,7 @@ export default function Home() {
     } catch {}
   }
 
-  const cats = ["Shop All", "Best Sellers", "Kitchen", "Bartan", "Storage & Organizers"]
+  const cats = ["Shop All", "Best Sellers", "Kitchen", "Bartan", "Storage & Organizers", "Chopper", "Crockery", "Decoration", "Electronics", "Fashion", "Gift Items", "Home & Living", "Beauty", "Kitchenware"]
   function getPrice(p:any){
     return {
       current: p?.price || 1499,
