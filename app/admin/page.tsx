@@ -56,24 +56,14 @@ const handleFetchDaraz=async()=>{
   if(!form.affiliate_link) return alert('Link dalo');
   setDarazFetching(true);
   try{
-    const res=await fetch('/api/【entity-daraz¦canonical_name=Daraz】-price',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:form.affiliate_link})});
+    const res=await fetch('/api/daraz-price',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:form.affiliate_link})});
     const d=await res.json();
     if(d.success && d.price){setForm(f=>({...f,name:d.name||f.name,price:String(d.price),image_url:d.image||f.image_url}));alert('Price mil gaya: Rs.'+d.price);}
     else alert('Manual price likh do');
   }catch{alert('Error');}
   setDarazFetching(false);
 };
-  // FIX 1: Duplicate category check - LOCKED SETTING
-  const addCategory=async()=>{
-    if(!newCatName.trim())return;
-    const trimmed=newCatName.trim();
-    const slug=trimmed.toLowerCase().replace(/[^a-z0-9]+/g,'-');
-    const exists=categoriesList.some((c:any)=>c.name.toLowerCase()===trimmed.toLowerCase() || c.slug===slug);
-    if(exists){alert('Ye category pehle se hai!');return;}
-    await supabase.from('categories').insert([{name:trimmed,slug}]);
-    await supabase.from('nav_buttons').insert([{label:trimmed,slug,type:'category',active:true,order_index:0}]);
-    setNewCatName('');fetchCategories();
-  };
+  const addCategory=async()=>{if(!newCatName.trim())return;const slug=newCatName.toLowerCase().replace(/[^a-z0-9]+/g,'-');await supabase.from('categories').insert([{name:newCatName.trim(),slug}]);await supabase.from('nav_buttons').insert([{label:newCatName.trim(),slug,type:'category',active:true,order_index:0}]);setNewCatName('');fetchCategories();};
   const deleteCategory=async(slug:string)=>{if(!confirm('Delete?'))return;await supabase.from('categories').delete().eq('slug',slug);await supabase.from('nav_buttons').delete().eq('slug',slug);fetchCategories();};
   const handleLogin=async(e:any)=>{e.preventDefault();setAuthLoading(true);setAuthError('');const {error}=await supabase.auth.signInWithPassword({email,password});if(error){setAuthError(error.message);setAuthLoading(false);}else{setIsAuthenticated(true);setAuthLoading(false);}};
 
@@ -110,7 +100,7 @@ const handleFetchDaraz=async()=>{
   const handleAutoUpdate=async(p:any)=>{
     setUpdatingId(p.id);
     try{
-      const res=await fetch('/api/【entity-daraz¦canonical_name=Daraz】-price',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:p.affiliate_link})});
+      const res=await fetch('/api/daraz-price',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:p.affiliate_link})});
       const data=await res.json();
       if(data.success&&confirm('New Rs.'+data.price+' Old Rs.'+p.price)){await supabase.from('products').update({price:data.price}).eq('id',p.id);fetchProducts();}
     }catch{}
@@ -118,8 +108,7 @@ const handleFetchDaraz=async()=>{
   };
 
   const filtered=products.filter((p:any)=>p.name.toLowerCase().includes(searchQuery.toLowerCase()));
-  // FIX 2: Categories - LOCKED SETTING - Unique from categoriesList
-  const categories=[...new Set(categoriesList.map((c:any)=>c.name.trim()).filter(Boolean))] as string[];
+  const categories=Array.from(new Set(products.map((p:any)=>p.category))) as string[];
   const bestSellers=products.filter((p:any)=>p.is_best_seller);
   const featured=products.filter((p:any)=>p.is_featured);
 
@@ -133,14 +122,8 @@ const handleFetchDaraz=async()=>{
   if(!isAuthenticated){return(<div className="min-h-screen bg-[#0f2e26] flex items-center justify-center p-4"><div className="bg-white rounded-[20px] p-8 w-full max-w-[400px]"><h1 className="text-[22px] font-bold text-center">Al Safa Traders</h1><form onSubmit={handleLogin} className="space-y-4 mt-4"><input type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email" className="w-full border rounded-xl px-4 py-3"/><div className="relative"><input type={showPassword?"text":"password"} required value={password} onChange={e=>setPassword(e.target.value)} placeholder="Password" className="w-full border rounded-xl px-4 py-3"/><button type="button" onClick={()=>setShowPassword(!showPassword)} className="absolute right-2 top-2 bg-gray-100 px-3 py-1 rounded-full text-xs">{showPassword?'Hide':'Show'}</button></div>{authError&&<p className="text-red-600 text-xs bg-red-50 p-2 rounded">{authError}</p>}<button type="submit" className="w-full bg-[#0f2e26] text-white py-3 rounded-xl font-bold">{authLoading?'Unlocking...':'Unlock'}</button></form></div></div>);}
 
   let displayProducts=filtered;
-  // FIX 3: Category tab filter - LOCKED
   if(activeTab==='featured') displayProducts=filtered.filter((p:any)=>p.is_featured);
-  else if(activeTab==='bestsellers') displayProducts=filtered.filter((p:any)=>p.is_best_seller);
-  else if(activeTab!=='dashboard' && activeTab!=='products' && activeTab!=='categories' && activeTab!=='【entity-daraz¦canonical_name=Daraz】' && activeTab!=='buttons'){
-    const catObj=categoriesList.find((c:any)=>c.slug===activeTab || c.name===activeTab);
-    const catName=catObj?catObj.name:activeTab;
-    displayProducts=filtered.filter((p:any)=>p.category===catName);
-  }
+  if(activeTab==='bestsellers') displayProducts=filtered.filter((p:any)=>p.is_best_seller);
 
   return(
     <div className="min-h-screen bg-[#f8f9f6] flex text-[13px]">
@@ -152,10 +135,7 @@ const handleFetchDaraz=async()=>{
           <MenuBtn id="featured" label="Featured" count={featured.length} />
           <MenuBtn id="bestsellers" label="Best Sellers" count={bestSellers.length} />
           <MenuBtn id="categories" label="Categories" count={categoriesList.length||categories.length} />
-          {categories.map((cat:any)=>(
-            <MenuBtn key={cat} id={cat} label={cat} count={products.filter((p:any)=>p.category===cat).length} />
-          ))}
-          <MenuBtn id="【entity-daraz¦canonical_name=Daraz】" label="【entity-Daraz¦canonical_name=Daraz】 - Total Connected" />
+          <MenuBtn id="daraz" label="Daraz - Total Connected" />
           <MenuBtn id="buttons" label="Public Controls - Active" />
           <button onClick={async()=>{await supabase.auth.signOut();setIsAuthenticated(false);}} className="w-full px-4 py-2.5 text-left text-gray-300 mt-4 border-t border-white/10 pt-4">Lock Panel</button>
         </div>
@@ -188,9 +168,9 @@ const handleFetchDaraz=async()=>{
             </>
           )}
 
-          {(activeTab==='dashboard'||activeTab==='products'||activeTab==='featured'||activeTab==='bestsellers'|| categories.includes(activeTab))&&(
+          {(activeTab==='dashboard'||activeTab==='products'||activeTab==='featured'||activeTab==='bestsellers')&&(
             <div className="bg-white rounded-xl p-4 border">
-              <p className="font-bold mb-3">Recent Products - {displayProducts.length} | Theme: {form.display_theme} {activeTab!=='dashboard'? `| Category: ${activeTab}` : ''}</p>
+              <p className="font-bold mb-3">Recent Products - {displayProducts.length} | Theme: {form.display_theme}</p>
               {loading?<p className="text-center py-8">Loading...</p>:(
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
                 {displayProducts.slice(0,20).map((p:any)=>(
