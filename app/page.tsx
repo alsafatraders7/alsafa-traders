@@ -58,31 +58,14 @@ export default function Home() {
 
   const cats = ["Shop All", "Best Sellers", "Kitchen", "Bartan", "Storage & Organizers"]
 
+  const getPrice = (p:any) => {
+    return {
+      current: p.price,
+      original: p.price,
+      discount: 0
+    }
+  }
+
   const filtered = products.filter((p: any) => {
     const s =!search || p.name?.toLowerCase()?.includes(search.toLowerCase())
-    const c = cat === "Shop All"? true : cat === "Best Sellers"? p.is_best_seller : p.category === cat
-    return s && c
-  })
-
-  return (
-    <div className="min-h-screen bg-[#E8F5E9]">
-      <header className="bg-[#1A3C34] p-3 flex items-center gap-3 sticky top-0 z-20">
-        <div className="bg-[#FFC107] w-10 h-10 rounded-full flex items-center justify-center font-black">AS</div>
-        <div className="text-white font-black leading-none">Al Safa<br />Traders.pk</div>
-        <div className="flex-1 bg-white rounded-full px-4 py-2.5 flex items-center gap-2 ml-2">
-          <span>🔍</span>
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search chopper, storage," className="w-full outline-none text-sm bg-transparent" />
-        </div>
-      </header>
-
-      <div className="bg-[#1A3C34] flex gap-2 p-2 overflow-x-auto">
-        {cats.map((c) => (
-          <button key={c} onClick={() => setCat(c)} className={`${cat === c? "bg-white text-[#1A3C34]" : "text-white/70"} px-5 py-2 rounded-full text-sm font-bold shrink-0`}>
-            {c}
-          </button>
-        ))}
-      </div>
-
-      <main className="max-w-6xl mx-auto p-4 grid md:grid-cols-2 gap-6 items-start">
-        <div>
-          <h1 className="text-[26px] font-black text-[#1A3C34]">Welcome to Safa
+    const c = cat === "Shop All"? true : cat === "Best Sellers"? p.is_best
