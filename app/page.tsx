@@ -10,7 +10,17 @@ export default function Home() {
   const [name, setName] = useState("")
   const [rating, setRating] = useState(5)
   const [comment, setComment] = useState("")
-
+const [activeImg, setActiveImg] = useState(0)
+const getProductImages = (p:any) => {
+  if(!p) return [];
+  const parts = (p.description || '').split('||');
+  const getVal = (k:string) => {
+    const f = parts.find((x:string)=> x.includes(k+':'));
+    return f? f.split(k+':')[1]?.trim() : '';
+  };
+  const fromDesc = [getVal('IMG2'), getVal('IMG3'), getVal('IMG4')].filter(Boolean);
+  return [p.image_url, p.image_url2, p.image_url3, p.image_url4,...fromDesc].filter(Boolean);
+};
   useEffect(() => {
     const load = async () => {
       try {
@@ -155,10 +165,23 @@ export default function Home() {
       {selected && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setSelected(null)}>
           <div className="bg-white rounded-[20px] max-w-[450px] w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <img src={selected.image_url} className="w-full h-[320px] object-cover rounded-t-[20px]" alt={selected.name} />
-            <div className="p-5">
-              <h2 className="text-[18px] font-black text-[#1A3C34]">{selected.name}</h2>
+            
+             {(() => {
+  const imgs = getProductImages(selected);
+  return (
+    <div>
+      <img src={imgs[activeImg] || imgs[0]} className="w-full h-[320px] object-cover rounded-t-[20px] bg-white" alt={selected.name} />
+      <div className="flex gap-2 mt-3 px-3 justify-center">
+        {imgs.map((img:string,i:number)=>(
+          <img key={i} src={img} onClick={()=>setActiveImg(i)} className={`w-16 h-16 object-cover rounded-lg cursor-pointer border-2 ${activeImg===i? 'border-black':'border-gray-200'}`} />
+        ))}
+      </div>
+    </div>
+  )
+})()}
+             <div className="p-5"> <h2 className="text-[18px] font-black text-[#1A3C34]">{selected.name}</h2>
               {(() => { const pr = getPrice(selected); return (
+
                 <p className="text-[13px] mt-1"><span className="line-through text-gray-400">Rs.{pr.original}</span> <b className="ml-2">Rs.{pr.current}</b> <span className="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full ml-2">-{pr.discount}% OFF</span></p>
               )})()}
               <p className="text-[13px] text-[#1A3C34]/80 mt-3">Premium quality - Daraz pe best price me available.</p>
